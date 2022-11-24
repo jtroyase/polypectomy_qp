@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     '''
@@ -21,8 +22,11 @@ def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     img_annotate_path = []
     
     for index, row in df.iterrows():
-        frames_df = row['Frame']
-        im_path = os.path.join(dir, str(frames_df) + '.jpg')
+        frames_df = row['frame']
+        while len(frames_df) < 7:
+            frames_df = '0' + frames_df
+
+        im_path = os.path.join(dir, frames_df + '.jpg')
 
         if im_path in img_paths:
             img_annotate_path.append(im_path)
@@ -50,6 +54,6 @@ def get_database(folder):
         
     # Read the database
     df_loc = os.path.join(folder, find_csv[0])
-    df = pd.read_csv(df_loc, index_col = 'Unnamed: 0')
-
+    df = pd.read_csv(df_loc, dtype = {'frame':str})
+    
     return df

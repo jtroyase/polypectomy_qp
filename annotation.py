@@ -1,8 +1,12 @@
+import os
+import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
 from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
      QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup
+
+import read_data
 
 
 def make_folder(directory):
@@ -15,7 +19,7 @@ def make_folder(directory):
 
 
 class LabelerWindow(QWidget):
-    def __init__(self, df, df_path, df_MASTER, input_folder, mode):
+    def __init__(self, df, input_folder):
         super().__init__()
 
         # init UI state
@@ -30,22 +34,21 @@ class LabelerWindow(QWidget):
 
         # state variables
         self.df = df
-        self.df_MASTER = df_MASTER
         self.counter = 0
         self.input_folder = input_folder
-        self.img_paths = get_img_paths(input_folder, self.df)
+        self.video_name = os.path.split(input_folder)[1] + '.mkv'
+        self.img_paths = read_data.get_img_paths(input_folder, self.df)
         self.img_root = os.path.split(self.img_paths[0])[0]
         self.num_images = len(self.img_paths)
         self.frame_to_jump = int(os.path.split(self.img_paths[0])[-1][:-4])
         self.assigned_labels = {}
-        self.mode = mode
         self.label_inputs = []
         self.label_headlines = []
         self.btn_overview = []
         self.start = False
 
         # Get path of the master csv
-        self.df_path = df_path
+        self.df_path = os.path.join(input_folder, self.video_name[:-4] + '.csv')
 
         # initialize list to save all label buttons
         self.label_buttons = []
@@ -144,7 +147,7 @@ class LabelerWindow(QWidget):
         self.pending_annotations = {}
         for index, row in self.df.iterrows():          
             if type(row['Goldstandard coord']) == float:
-                self.pending_annotations[row['Frame']] = None
+                self.pending_annotations[row['frame']] = None
 
         # create buttons
         self.init_buttons()
@@ -250,6 +253,7 @@ class LabelerWindow(QWidget):
     def init_radioButtons(self):
 
         self.activeRadioButtons = []
+
 
         self.radioButton1 = QRadioButton("GIGv1 (green)", self)
         self.radioButton1.move(self.img_panel_width + 60, 110)
@@ -436,7 +440,7 @@ class LabelerWindow(QWidget):
         '''
 
         try:
-            index = self.df.loc[self.df['Frame'] == image].index[0]
+            index = self.df.loc[self.df['frame'] == image].index[0]
             
             if coordinates == 'Polyp not identified':
                 self.df.at[index, 'Goldstandard coord'] = 'Polyp not identified'
@@ -484,7 +488,7 @@ class LabelerWindow(QWidget):
                        }
 
         # Show always Goldstandard coordinates 
-        coordinates_goldstandard = self.df.loc[self.df['Frame'] == image]['Goldstandard coord'].values[0]
+        coordinates_goldstandard = self.df.loc[self.df['frame'] == image]['Goldstandard coord'].values[0]
         # print('Beginning read_box_coordinates', coordinates_goldstandard, type(coordinates_goldstandard))
         # For already saved annotations, we need to convert str to list
         if type(coordinates_goldstandard) == str:
@@ -518,7 +522,7 @@ class LabelerWindow(QWidget):
         # Show coordinates of the other systems if user has checked the boxes
         if len(systems) != 0:
             for system in systems: 
-                coordinates = self.df.loc[self.df['Frame'] == image][correlation[system]].values[0]
+                coordinates = self.df.loc[self.df['frame'] == image][correlation[system]].values[0]
                 
                 # If there are annotations, then they are strings, if there are no annotations, then they are float
                 if type(coordinates) == str:
@@ -696,7 +700,7 @@ class LabelerWindow(QWidget):
         frame_number = int(os.path.split(current_image_path)[-1].split('.')[0])
         
         try:
-            index = self.df.loc[self.df['Frame'] == frame_number].index[0]
+            index = self.df.loc[self.df['frame'] == frame_number].index[0]
             self.df.at[index, 'Goldstandard coord'] = float("nan")
         except:
             raise ValueError('Coordinates could not be eliminated on dataframe')
@@ -721,7 +725,7 @@ class LabelerWindow(QWidget):
         frame_number = int(os.path.split(current_image_path)[-1].split('.')[0])
         
         try:
-            index = self.df.loc[self.df['Frame'] == frame_number].index[0]
+            index = self.df.loc[self.df['frame'] == frame_number].index[0]
             self.df.at[index, 'Goldstandard coord'] = "Polyp not identified"
         except:
             raise ValueError('Dataframe could not be updated')
