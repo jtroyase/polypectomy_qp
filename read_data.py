@@ -36,9 +36,10 @@ def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     return img_annotate_path
 
 
-def get_database(folder):
+def get_database(folder, labels):
     '''
     :param selected_folder: Path of the folder of the data to annotate
+    :param labels: labels that user has chosen to annotate
     :return: Database as a pandas object
     '''
 
@@ -55,5 +56,10 @@ def get_database(folder):
     # Read the database
     df_loc = os.path.join(folder, find_csv[0])
     df = pd.read_csv(df_loc, dtype = {'frame':str})
-    
+
+    # If the database does not have columns for HiWi annotations, create them
+    for label in labels:
+        if label + '_gs' not in df.columns.to_list():
+            df[label+'_gs']= np.nan
+
     return df

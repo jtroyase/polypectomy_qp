@@ -1,0 +1,7 @@
+# Setup the possible labels to annotate:
+# Use a list containing strings
+labels = ["polyp", "needle", "grasper", "snare", "clip"]
+extra_labels = ["wound", "outside", "ileum"]
+
+# Maximum number of polyps possible to annotate
+# max_polyp = 8
