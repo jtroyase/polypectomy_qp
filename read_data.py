@@ -63,3 +63,42 @@ def get_database(folder, labels):
             df[label+'_gs']= np.nan
 
     return df
+
+def read_annotations(frame_number, labels, df):
+    '''
+    :param frame_number: Number of the frame to read annotations
+    :param labels: which labels should we return
+    :param df: dataframe to read the labels from
+    :return: dictionary containing two keys
+        "gs_annotations": dictionary containing gs annotations for each requested label
+        "ai_predictions": dictionary containing ai predictions for each requested label
+    '''
+
+    annotations_output = {'gs_annotations':[],
+                          'ai_predictions':[]
+                          }
+    
+    for lab in labels:
+        
+        # If it is for polyp, the format is different because it contains coordinates
+        # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
+        if lab == 'polyp':
+            # ANNOTATIONS
+            polyp_gs = df.loc[df['frame'] == frame_number]['polyp_gs'].values
+            if polyp_gs:
+                polyp_gs = ast.literal_eval(polyp_gs[0])
+                annotations_output['gs_annotations']['polyp'] = polyp_gs
+            #PREDICTIONS
+            polyp_ai = df.loc[df['frame'] == frame_number]['{}'.format('polyp')].values
+            if polyp_ai:
+                annotations_output['ai_predictions']['polyp'] = polyp_ai[0]
+
+        else:
+            l_gs = df.loc[df['frame'] == frame_number]['{}_gs'.format(lab)].values
+            l_ai = df.loc[df['frame'] == frame_number]['{}'.format(lab)].values
+            if l_gs:
+                annotations_output['gs_annotations'][lab] = l_gs[0]
+            if l_ai:
+                annotations_output['ai_predictions'][lab] = l_ai[0]
+
+    return annotations_output

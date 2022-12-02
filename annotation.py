@@ -103,9 +103,9 @@ class LabelerWindow(QWidget):
         self.csv_generated_message.setGeometry(self.img_panel_width + -800, 1000, 1200, 20)
         self.csv_generated_message.setStyleSheet('color: #43A047')
 
-        # Set the first image and present the annotations if there are
-        gs_annotations = self.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels)
-        self.set_image(self.img_paths[0], gs_annotations, False)
+        # Set the first image with GS and AI annotations if there are:
+        annotations = read_data.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels, self.df)
+        self.set_image(self.img_paths[0], annotations['gs_annotations'], False)
 
         # Initiate the ScrollArea AI
         self.scroll.setGeometry(1653, 310, 197, 618)
@@ -152,7 +152,7 @@ class LabelerWindow(QWidget):
 
         # Add "Open" button to load a new file
         open_file = QtWidgets.QPushButton("Open", self)
-        open_file.move(self.img_panel_width + 100, 980)
+        open_file.move(self.img_panel_width + 95, 980)
         open_file.clicked.connect(self.openFile)
         open_file.setObjectName("blueButton")
 
@@ -322,44 +322,6 @@ class LabelerWindow(QWidget):
 
         return self.df
 
-
-    def read_annotations(self, image_frame_number, labels):
-        '''
-        :param image_frame_number: image frame number
-        :param systems: labels that we are annotating
-        returns annotations
-        '''
-
-        annotations_output = {}
-
-        # ANNOTATIONS FOR POLYP
-        # They have the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]    
-        polyp_gs = self.df.loc[self.df['frame'] == image_frame_number]['polyp_gs'].values
-        if polyp_gs:
-            polyp_gs = ast.literal_eval(polyp_gs[0])
-            annotations_output['polyp'] = polyp_gs
-
-        # ANNOTATIONS FOR SNARE
-        snare_gs = self.df.loc[self.df['frame'] == image_frame_number]['snare_gs'].values
-        if snare_gs:
-            annotations_output['snare'] = snare_gs[0]
-
-        # ANNOTATIONS FOR GRASPER
-        grasper_gs = self.df.loc[self.df['frame'] == image_frame_number]['grasper_gs'].values
-        if grasper_gs:
-            annotations_output['grasper'] = grasper_gs[0]
-
-        # ANNOTATIONS FOR NEEDLE
-        needle_gs = self.df.loc[self.df['frame'] == image_frame_number]['needle_gs'].values
-        if needle_gs:
-            annotations_output['needle'] = needle_gs[0]
-
-        # ANNOTATIONS FOR CLIP
-        clip_gs = self.df.loc[self.df['frame'] == image_frame_number]['clip_gs'].values
-        if clip_gs:
-            annotations_output['clip'] = clip_gs[0]
-
-        return annotations_output
 
     def generate_csv(self, out_filename):
         """
