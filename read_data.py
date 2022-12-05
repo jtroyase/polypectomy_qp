@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+import ast
 
 def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     '''
@@ -74,8 +75,8 @@ def read_annotations(frame_number, labels, df):
         "ai_predictions": dictionary containing ai predictions for each requested label
     '''
 
-    annotations_output = {'gs_annotations':[],
-                          'ai_predictions':[]
+    annotations_output = {'gs_annotations':{},
+                          'ai_predictions':{}
                           }
     
     for lab in labels:
@@ -84,21 +85,22 @@ def read_annotations(frame_number, labels, df):
         # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
         if lab == 'polyp':
             # ANNOTATIONS
-            polyp_gs = df.loc[df['frame'] == frame_number]['polyp_gs'].values
-            if polyp_gs:
+            polyp_gs = df.loc[df['frame'] == str(frame_number)]['polyp_gs'].values
+            if not np.isnan(polyp_gs):
                 polyp_gs = ast.literal_eval(polyp_gs[0])
                 annotations_output['gs_annotations']['polyp'] = polyp_gs
             #PREDICTIONS
-            polyp_ai = df.loc[df['frame'] == frame_number]['{}'.format('polyp')].values
-            if polyp_ai:
+            polyp_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format('polyp')].values
+            if polyp_ai == 1:
                 annotations_output['ai_predictions']['polyp'] = polyp_ai[0]
 
         else:
-            l_gs = df.loc[df['frame'] == frame_number]['{}_gs'.format(lab)].values
-            l_ai = df.loc[df['frame'] == frame_number]['{}'.format(lab)].values
-            if l_gs:
+            l_gs = df.loc[df['frame'] == str(frame_number)]['{}_gs'.format(lab)].values
+            l_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format(lab)].values
+            if l_gs == 1:
                 annotations_output['gs_annotations'][lab] = l_gs[0]
-            if l_ai:
+            if l_ai == 1:
                 annotations_output['ai_predictions'][lab] = l_ai[0]
+
 
     return annotations_output

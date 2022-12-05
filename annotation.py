@@ -46,6 +46,9 @@ class LabelerWindow(QWidget):
         self.frame_to_jump = int(os.path.split(self.img_paths[0])[-1][:-4])
         self.start = False
 
+        # initialize list to save all label buttons
+        self.label_buttons = []
+
         # Get path of the master csv
         self.df_path = os.path.join(input_folder, self.video_name[:-4] + '.csv')
 
@@ -59,15 +62,31 @@ class LabelerWindow(QWidget):
         # Jump to QLineEdit
         self.jumpto_user = QLineEdit(self)
 
-        #layouts
-        self.formLayout =QFormLayout()
+        ##### SCROLL TO VISUALIZE ANNOTATIONS/PREDICTIONS
+        # layouts
+        self.formLayout_gs =QFormLayout()
+        self.formLayout_ai =QFormLayout()
 
-        #GroupBoxs
-        self.groupBox = QGroupBox()
-
-        #Scrolls for overview annotation
-        self.scroll = QScrollArea(self)
+        # scroll areas
+        self.scroll_gs = QScrollArea(self)
+        self.scroll_ai = QScrollArea(self)
         
+        # GroupBoxs
+        self.groupBox_gs = QGroupBox()
+        self.groupBox_ai = QGroupBox()
+        self.groupBox_gs.setTitle('Annotations:')
+        self.groupBox_gs.setStyleSheet('font-weight: bold')
+        self.groupBox_ai.setTitle('AI predictions:')
+        self.groupBox_ai.setStyleSheet('font-weight: bold')
+
+        self.groupBox_gs.setLayout(self.formLayout_gs)
+        self.scroll_gs.setWidget(self.groupBox_gs)
+        self.scroll_gs.setWidgetResizable(True)
+
+        self.groupBox_ai.setLayout(self.formLayout_ai)
+        self.scroll_ai.setWidget(self.groupBox_ai)
+        self.scroll_ai.setWidgetResizable(True)
+
         # Create two point instances
         self.begin, self.destination = QPoint(), QPoint()
 
@@ -103,14 +122,9 @@ class LabelerWindow(QWidget):
         self.csv_generated_message.setGeometry(self.img_panel_width + -800, 1000, 1200, 20)
         self.csv_generated_message.setStyleSheet('color: #43A047')
 
-        # Set the first image with GS and AI annotations if there are:
-        annotations = read_data.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels, self.df)
-        self.set_image(self.img_paths[0], annotations['gs_annotations'], False)
-
-        # Initiate the ScrollArea AI
-        self.scroll.setGeometry(1653, 310, 197, 618)
-        
-        # Initiate the ScrollArea HiWi
+        # Initiate the ScrollAreas AI and position them
+        self.scroll_gs.setGeometry(1653, 280, 197, 380)
+        self.scroll_ai.setGeometry(1653, 670, 197, 260)
 
         # image name
         self.img_name_label.setText(os.path.split(self.img_paths[self.counter])[1])
@@ -133,6 +147,12 @@ class LabelerWindow(QWidget):
                 self.setStyleSheet(fh.read())
         except:
             print("Can't load custom stylesheet.")
+
+        # Set the first image with GS and AI annotations if there are:
+        self.annotations = read_data.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels, self.df)
+        self.set_image(self.img_paths[0], self.annotations, False)
+
+
 
     def init_buttons(self):
 
@@ -182,8 +202,13 @@ class LabelerWindow(QWidget):
         jump_btn.move(self.img_panel_width - 780, 970)
         jump_btn.clicked.connect(self.toJump)
 
-        # Add scroll tab
-        # self.annotation_overview(None, True)
+        # create button for each label
+        for i, label in enumerate(self.labels):
+            self.label_buttons.append(QtWidgets.QPushButton(label, self))
+            button = self.label_buttons[i]
+            button.clicked.connect(lambda state, x=label: self.set_label(x))
+            self.formLayout_gs.addRow(button)
+
 
     def toJump(self):
 
@@ -213,16 +238,17 @@ class LabelerWindow(QWidget):
             self.error_message.setText(message)
     
 
-    def show_next_image(self, with_box, from_button):
+    def show_next_image(self):
         """
         calls method to store coordinates drawn in pandas dataframe
         calls method to update the annotations overview (pending)
         loads and shows next image in dataset
-        :param with_box: load next image with previous box coordinates
         """
         
-        # only if it is start mode or comes from button
-        if (self.start == True) or (from_button == True):
+        # store the annotations on the image
+        
+
+        # load the new image with the previous annotations
             # Frame number of the image to store
             frame_number = int(os.path.split(self.img_paths[self.counter])[-1].split('.'))
             
@@ -323,58 +349,30 @@ class LabelerWindow(QWidget):
         return self.df
 
 
-    def generate_csv(self, out_filename):
-        """
-        Reads from the subset polyp dataframe all the annotations that have been done
-        and stores them in the master dataframe
-        :param out_filename: name of csv file to be generated
-        """
-
-        # Save different versions
-        path_to_save = os.path.join(self.input_folder, 'output')
-        make_folder(path_to_save)
-
-        timestr = time.strftime("%Y-%m-%d_%H-%M-%S_")
-        csv_file_path = path_to_save + '/' + timestr + os.path.split(out_filename)[-1]
-
-        # Transfer the annotated data to the master dataframe
-        for index, row in self.df.iterrows():
-            self.df_MASTER.at[index, 'Goldstandard coord'] = row['Goldstandard coord']
-
-        self.df_MASTER.to_csv(csv_file_path)
-
-        # Rewrite the master csv
-        self.df_MASTER.to_csv(self.df_path)
-
-        message = f'csv saved to: {csv_file_path}'
-        self.csv_generated_message.setText(message)
-        print(message)
-
-
-    def set_image(self, path, gs_annotations, from_scroll):
+    def set_image(self, path, annotations, from_scroll):
         """
         displays the image in GUI
         :param path: path to the image that should be show
-        :param coordinates: contains the coordinates of the different boxes that need to be drawn.
-        :param from_scrool: True if the image has been set by clicking the annotations_pending scroll tab
+        :param annotations: contains the annotations and predictions that need to be drawn or shown.
+        :param from_scroll: True if the image has been set by clicking the annotations_pending scroll tab
         """
       
+        ##### UPDATE IMAGE      
         self.pixmap = QPixmap(path)
         img_width = self.pixmap.width()
         img_height = self.pixmap.height()
         self.pixmap = self.pixmap.scaledToWidth(1650)
 
+        ##### UPDATE ANNOTATIONS
         # Coordinates need to be drawn in case of polyp annotations
-        # The bounding boxes will be drawn with different pen colors depending
-        # on the id of the polyp
+        # The bounding boxes will be drawn with different pen colors depending on the id of the polyp
         colors_polyp = {1:Qt.red, 2:Qt.green, 3:Qt.blue, 4:Qt.yellow, 5:Qt.cyan, 6:Qt.magenta, 7:Qt.gray, 8:Qt.black}
         painterInstance = QPainter(self.pixmap)
 
-        if 'polyp' in gs_annotations:
+        if 'polyp' in annotations['gs_annotations']:
             '[(1, (x,y,width,height)), (2, (x,y,width,height))]'
-            for polyp in gs_annotations['polyp']:
+            for polyp in annotations['gs_annotations']['polyp']:
 
-                # set rectangle color and thickness depending on the polyp id
                 penRectangle = QPen(colors_polyp[polyp], 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
                 painterInstance.setPen(penRectangle)
 
@@ -388,41 +386,65 @@ class LabelerWindow(QWidget):
                     rect = QRect(x, y, width, height)
                     painterInstance.drawRect(rect)
 
+        ##### CALL FOR UPDATE PREDICTIONS
+        self.predictions_overview(self.annotations)
+
+        ##### OTHER INFO
+        # Set the name of the image displayed
         self.img_name_label.setText(path)
         # we need to find the value of self.counter for the image
         self.counter = self.img_paths.index(path)
+        # Mark in green the buttons
+        self.set_button_color()
         self.update()
-
-    def annotation_overview(self, frame_number_to_remove, init):
+    
+    
+    def predictions_overview(self, annotations):
         '''
-        Creates a scroll tab overview with pending annotations
-        :param frame_number_to_remove: self explanatory
-        :param init: the first time needs to be different
+        Creates a scroll tab overview of the AI predictions
+        :param annotations: self explanatory
         '''
+        for label in annotations['ai_predictions']:
+            # append widgets to lists
+            label = QLabel(label, self)
+            self.formLayout_ai.addRow(label)
 
-        if init == True:
-            self.groupBox.setTitle('Annotations pending:')
-            self.groupBox.setStyleSheet('font-weight: bold')
-
-            # display input fields
-            for value in self.pending_annotations:
-                # append widgets to lists
-                self.btn = QtWidgets.QPushButton('Frame {}'.format(value), self)
-                self.pending_annotations[value] = self.btn
-                self.btn.clicked.connect(lambda state, im_path=os.path.join(self.img_root, str(value)) + '.jpg', coord = []: self.set_image(im_path, coord, True))
-                self.formLayout.addRow(self.btn)
-
-            self.groupBox.setLayout(self.formLayout)
-            self.scroll.setWidget(self.groupBox)
-            self.scroll.setWidgetResizable(True)
             
+    def set_label(self, label):
+        """
+        Sets the label for just loaded image
+        :param label: selected label
+        """
+
+        # Has the image the label?
+        if label in self.annotations['gs_annotations'].keys():
+            # Then it can be two things, green to red or red to none
+            if self.annotations['gs_annotations'][label] == 1:
+                self.annotations['gs_annotations'][label] = 2
+            else:
+                del self.annotations['gs_annotations'][label]
         else:
-            self.formLayout.removeWidget(self.pending_annotations[frame_number_to_remove])
-            self.pending_annotations[frame_number_to_remove].deleteLater()
-            self.pending_annotations[frame_number_to_remove] = None
-           
-            if frame_number_to_remove is not None:
-                del self.pending_annotations[frame_number_to_remove]
+            # Add the label
+            self.annotations['gs_annotations'][label] = 1
+        
+        self.set_button_color()
+
+
+
+    def set_button_color(self):
+        """
+        Changes the color of the button which corresponds to selected label
+        """
+
+        for button in self.label_buttons:
+            if button.text() in self.annotations['gs_annotations'].keys():
+                if self.annotations['gs_annotations'][button.text()] == 1:
+                    button.setStyleSheet('border: 3px solid #43A047; background-color: #4CAF50; color: white')
+                else:
+                    button.setStyleSheet('border: 3px solid #FF0000; background-color: #FF0000; color: white')
+            else:
+                button.setStyleSheet('background-color: None')
+
 
 
     def reset_box(self):
@@ -452,31 +474,6 @@ class LabelerWindow(QWidget):
             self.pending_annotations[frame_number] = self.btn
             self.btn.clicked.connect(lambda state, im_path=os.path.join(self.img_root, str(frame_number)) + '.jpg', coord = {'Goldstandard coord':[]}: self.set_image(im_path, coord, False))
             self.formLayout.addRow(self.btn)
-
-         
-
-    def polyp_not_found(self):
-        '''
-        Modify the database
-        '''
-
-        current_image_path = self.img_paths[self.counter]
-
-        # remove the coordinates from database
-        frame_number = int(os.path.split(current_image_path)[-1].split('.'))
-        
-        try:
-            index = self.df.loc[self.df['frame'] == frame_number].index
-            self.df.at[index, 'Goldstandard coord'] = "Polyp not identified"
-        except:
-            raise ValueError('Dataframe could not be updated')
-
-        # Set the image with a red square
-        self.set_image(current_image_path, {"Goldstandard coord":"Polyp not identified"}, False)
-
-        # Update the scroll tab with images pending of annotation
-        self.annotation_overview(frame_number, False)
-         
 
 
     def paintEvent(self, event):
@@ -531,3 +528,31 @@ class LabelerWindow(QWidget):
         """
         print("closing the App..")
         self.generate_csv(self.df_path)
+
+    
+    def generate_csv(self, out_filename):
+        """
+        Reads from the subset polyp dataframe all the annotations that have been done
+        and stores them in the master dataframe
+        :param out_filename: name of csv file to be generated
+        """
+
+        # Save different versions
+        path_to_save = os.path.join(self.input_folder, 'output')
+        make_folder(path_to_save)
+
+        timestr = time.strftime("%Y-%m-%d_%H-%M-%S_")
+        csv_file_path = path_to_save + '/' + timestr + os.path.split(out_filename)[-1]
+
+        # Transfer the annotated data to the master dataframe
+        for index, row in self.df.iterrows():
+            self.df_MASTER.at[index, 'Goldstandard coord'] = row['Goldstandard coord']
+
+        self.df_MASTER.to_csv(csv_file_path)
+
+        # Rewrite the master csv
+        self.df_MASTER.to_csv(self.df_path)
+
+        message = f'csv saved to: {csv_file_path}'
+        self.csv_generated_message.setText(message)
+        print(message)
