@@ -3,5 +3,8 @@
 labels = ["polyp", "needle", "grasper", "snare", "clip"]
 extra_labels = ["wound", "outside", "ileum"]
 
-# Maximum number of polyps possible to annotate
+# Maximum number of polyps possible to annotate (currently not used)
 # max_polyp = 8
+
+# Colors of polyps id
+colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}

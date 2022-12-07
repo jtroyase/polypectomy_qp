@@ -58,10 +58,10 @@ def get_database(folder, labels):
     df_loc = os.path.join(folder, find_csv[0])
     df = pd.read_csv(df_loc, dtype = {'frame':str})
 
-    # If the database does not have columns for HiWi annotations, create them
+    # If the database does not have columns for GS annotations, create them
     for label in labels:
         if label + '_gs' not in df.columns.to_list():
-            df[label+'_gs']= np.nan
+            df[label+'_gs']= None
 
     return df
 
@@ -80,15 +80,32 @@ def read_annotations(frame_number, labels, df):
                           }
     
     for lab in labels:
-        
         # If it is for polyp, the format is different because it contains coordinates
         # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
         if lab == 'polyp':
             # ANNOTATIONS
             polyp_gs = df.loc[df['frame'] == str(frame_number)]['polyp_gs'].values
-            if not np.isnan(polyp_gs):
-                polyp_gs = ast.literal_eval(polyp_gs[0])
-                annotations_output['gs_annotations']['polyp'] = polyp_gs
+            if polyp_gs:
+                if type(polyp_gs[0])==list:
+
+                    # The coordinates need to be normalized from 1920x1080 to 1650
+                    rescaled_coordinates = []
+                    
+                    for polyp_id, coordinates in polyp_gs[0]:
+                        x = int(coordinates[0]*0.8594)
+                        y = int(coordinates[1]*0.8594)
+                        width = int(coordinates[2]*0.8594)
+                        height = int(coordinates[3]*0.8594)
+                        
+                        rescaled_coordinates.append((polyp_id, (x,y,width, height)))
+
+                    annotations_output['gs_annotations']['polyp'] = rescaled_coordinates
+                    
+                else:
+                    print('In read_data, the type of coordinates is not a list anymore')
+                    polyp_gs = ast.literal_eval(polyp_gs[0])
+                    annotations_output['gs_annotations']['polyp'] = polyp_gs
+
             #PREDICTIONS
             polyp_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format('polyp')].values
             if polyp_ai == 1:
@@ -97,10 +114,10 @@ def read_annotations(frame_number, labels, df):
         else:
             l_gs = df.loc[df['frame'] == str(frame_number)]['{}_gs'.format(lab)].values
             l_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format(lab)].values
-            if l_gs == 1:
+            if l_gs == 1 or l_gs == 2:
                 annotations_output['gs_annotations'][lab] = l_gs[0]
-            if l_ai == 1:
+            if l_ai == 1 or l_gs == 2:
                 annotations_output['ai_predictions'][lab] = l_ai[0]
 
-
+    print(annotations_output)
     return annotations_output
