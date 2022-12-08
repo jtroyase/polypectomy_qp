@@ -135,8 +135,8 @@ class SetupWindow(QWidget):
                     labels_to_annotate.append(key)
 
             # Get the database
-            df = get_database(self.selected_folder, labels_to_annotate)
-            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate)
+            df, metadata = get_database(self.selected_folder, labels_to_annotate)
+            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, metadata)
             annotation_window.show()
         else:
             self.error_message.setText(message)

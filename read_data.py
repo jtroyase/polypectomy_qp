@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import ast
+import json
 
 def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     '''
@@ -63,7 +64,21 @@ def get_database(folder, labels):
         if label + '_gs' not in df.columns.to_list():
             df[label+'_gs']= None
 
-    return df
+    # Read the metadata
+    json_files = []
+    [json_files.append(file) for file in os.listdir(folder) if file.endswith('.json')]
+    
+    if not json_files:
+        raise OSError('Metadata file missing')
+    elif len(find_csv)>1:
+        print('Several metadata files on the folder. Using: {}'.format(json_files[0]))
+
+    with open(os.path.join(folder, json_files[0])) as f:
+        metadata = json.load(f)
+
+    print(metadata)
+
+    return df, metadata
 
 def read_annotations(frame_number, labels, df):
     '''
@@ -119,5 +134,7 @@ def read_annotations(frame_number, labels, df):
             if l_ai == 1 or l_gs == 2:
                 annotations_output['ai_predictions'][lab] = l_ai[0]
 
-    print(annotations_output)
+    
     return annotations_output
+
+get_database('/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/coloscopie_2021-03-23_15-00-16_Ludwig_crop', ['grasper'])

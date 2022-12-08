@@ -4,9 +4,10 @@ import pandas as pd
 import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
-from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont
+from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont, QBrush
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
-     QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup, QTableWidget, QTableWidgetItem
+     QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup, QTableWidget, \
+     QTableWidgetItem, QStyle, QStyleOptionTitleBar
 
 import read_data
 import user_widgets
@@ -22,18 +23,15 @@ def make_folder(directory):
 
 
 class LabelerWindow(QWidget):
-    def __init__(self, df, input_folder, labels):
+    def __init__(self, df, input_folder, labels, metadata):
         super().__init__()
 
         # init UI state
         self.title = 'PyQt5 - Box annotation tool'
-        self.left = 200
-        self.top = 100
-        self.width = 1100
-        self.height = 770
-        # img panel size should be square-like to prevent some problems with different aspect ratios
-        self.img_panel_width = 1600
-        self.img_panel_height = 900
+        self.width = metadata['cropping_coordinates'][3] - metadata['cropping_coordinates'][2]
+        self.height = metadata['cropping_coordinates'][1] - metadata['cropping_coordinates'][0]
+        self.img_panel_width = self.width
+        self.img_panel_height = self.height
 
         # state variables
         self.df = df
@@ -67,6 +65,9 @@ class LabelerWindow(QWidget):
         self.jumpto = QLabel('Jump to: ', self)
         self.error_message = QLabel(self)
 
+        # Create a Label for the image
+        self.labelImage = QLabel(self)
+
         # Jump to QLineEdit
         self.jumpto_user = QLineEdit(self)
 
@@ -95,55 +96,71 @@ class LabelerWindow(QWidget):
         self.scroll_ai.setWidget(self.groupBox_ai)
         self.scroll_ai.setWidgetResizable(True)
 
+        self.groupBox_ai.setStyleSheet('background: palette(window)')
+        self.groupBox_gs.setStyleSheet('background: palette(window)')
+
         # Create two point instances
         self.begin, self.destination = QPoint(), QPoint()
 
         # init UI
         self.init_ui()
-
+        
 
     def init_ui(self):
 
+        titleBarHeight = self.style().pixelMetric(
+            QStyle.PM_TitleBarHeight,
+            QStyleOptionTitleBar(),
+            self
+        )
+        
         self.setWindowTitle(self.title)
-        # self.setGeometry(self.left, self.top, self.width, self.height) # initial dimension of the window
-        self.setMinimumSize(self.width, self.height)  # minimum size of the window
+        geometry = QApplication.desktop().availableGeometry()
+        geometry.setHeight(geometry.height() - (titleBarHeight*2))
+        self.setGeometry(geometry)
+        
+        # Draw black rectangle to place the image
+        painter = QPainter(self)
+        painter.setPen(QPen(Qt.black,  5, Qt.DotLine))
+        painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+        painter.drawRect(0, 0, 1920, 1080)
 
         # video name headline
-        self.video_name_headline.setGeometry(1655, 5, 45, 20)
+        self.video_name_headline.setGeometry(self.img_panel_width + 10, 5, 45, 20)
         self.video_name_headline.setObjectName('headline')
 
         # video name label
-        self.video_name_label.setGeometry(1655, 23, 220, 20)
+        self.video_name_label.setGeometry(self.img_panel_width, 23, 220, 20)
 
         # frame number headline
-        self.frame_number_headline.setGeometry(1655, 50, 50, 20)
+        self.frame_number_headline.setGeometry(self.img_panel_width, 50, 50, 20)
         self.frame_number_headline.setObjectName('headline')
 
         # frame number label
-        self.frame_number_label.setGeometry(1705, 50, 45, 20)
+        self.frame_number_label.setGeometry(self.img_panel_width + 10, 50, 45, 20)
         
         # Draw polyp message
-        self.draw_polyp_message.setGeometry(1700, 130, 150, 20)
+        self.draw_polyp_message.setGeometry(self.img_panel_width + 10, 130, 150, 20)
         self.draw_polyp_message.setObjectName('headline')
 
         # jump to label
-        self.jumpto.setGeometry(1, 80, 60, 20)
+        self.jumpto.setGeometry(self.img_panel_width + 10, 80, 60, 20)
         self.jumpto.setObjectName('headline')
 
         # jump to editline user
-        self.jumpto_user.setGeometry(1720, 80, 120, 25)
+        self.jumpto_user.setGeometry(self.img_panel_width + 30, 80, 120, 25)
 
         # Error message jump
-        self.error_message.setGeometry(700, 1000, 500, 25)
+        self.error_message.setGeometry(self.img_panel_width +20, 1000, 500, 25)
         self.error_message.setStyleSheet('color: red; font-weight: bold')
 
         # message that csv was generated
-        self.csv_generated_message.setGeometry(self.img_panel_width + -800, 1000, 1200, 20)
+        self.csv_generated_message.setGeometry(self.img_panel_width + 30, 1000, 1200, 20)
         self.csv_generated_message.setStyleSheet('color: #43A047')
 
         # Initiate the ScrollAreas AI and position them
-        self.scroll_gs.setGeometry(1653, 280, 197, 380)
-        self.scroll_ai.setGeometry(1653, 670, 197, 260)
+        self.scroll_gs.setGeometry(self.img_panel_width + 5 , 280, 197, 380)
+        self.scroll_ai.setGeometry(self.img_panel_width + 5, 670, 197, 260)
 
         # frame_number set text
         frame_number = os.path.split(self.img_paths[self.counter])[-1][:-4]
@@ -155,7 +172,7 @@ class LabelerWindow(QWidget):
 
         # draw line to for better UX
         ui_line = QLabel(self)
-        ui_line.setGeometry(20, 930, 1012, 1)
+        ui_line.setGeometry(self.img_panel_width + 5, 0, 0, self.img_panel_height)
         ui_line.setStyleSheet('background-color: black')
 
         #coordinates Box
@@ -321,16 +338,16 @@ class LabelerWindow(QWidget):
         """
       
         ##### UPDATE IMAGE      
-        self.pixmap = QPixmap(path)
-        img_width = self.pixmap.width()
-        img_height = self.pixmap.height()
-        self.pixmap = self.pixmap.scaledToWidth(1650)
+        self.pix = QPixmap(path)
+        img_width = self.pix.width()
+        img_height = self.pix.height()
+        self.pix = self.pix.scaledToHeight(980)
 
         ##### UPDATE COORDINATE ANNOTATIONS
         # Coordinates need to be drawn in case of polyp annotations
         # The bounding boxes will be drawn with different pen colors depending on the id of the polyp
         if 'polyp' in annotations['gs_annotations']:
-            painterInstance = QPainter(self.pixmap)
+            painterInstance = QPainter(self.pix)
             # '[(1, (x,y,width,height)), (2, (x,y,width,height))]'
             for polyp in annotations['gs_annotations']['polyp']:
                 polyp_id = polyp[0]
@@ -356,6 +373,9 @@ class LabelerWindow(QWidget):
         self.counter = self.img_paths.index(path)
         # Mark in green the buttons
         self.set_button_color()
+        
+        self.labelImage.setPixmap(self.pix)
+        #self.labelImage.move(0, 0)
         self.update()
     
     
@@ -442,20 +462,21 @@ class LabelerWindow(QWidget):
 
 
     def paintEvent(self, event):
-        painter = QPainter(self)       
-        painter.drawPixmap(QPoint(), self.pixmap)
-
         if self.paint_activation == 1 and self.polyp_id != 0:
-            #if not self.begin.isNull() and not self.destination.isNull():
-            if ((abs(self.begin.x() - self.destination.x()) > 10) and (abs(self.begin.x() - self.destination.x()) > 10)):
-                try:
-                    pen = QPen(user_widgets.colors_polyp(self.polyp_id), 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
-                except KeyError:
-                    pen = QPen(Qt.green, 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
+            painter = QPainter(self)       
+            painter.drawPixmap(QPoint(), self.pixmap)
 
-                painter.setPen(pen)
-                rect = QRect(self.begin, self.destination)
-                painter.drawRect(rect.normalized())
+            if self.paint_activation == 1 and self.polyp_id != 0:
+                #if not self.begin.isNull() and not self.destination.isNull():
+                if ((abs(self.begin.x() - self.destination.x()) > 10) and (abs(self.begin.x() - self.destination.x()) > 10)):
+                    try:
+                        pen = QPen(user_widgets.colors_polyp(self.polyp_id), 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
+                    except KeyError:
+                        pen = QPen(Qt.green, 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
+
+                    painter.setPen(pen)
+                    rect = QRect(self.begin, self.destination)
+                    painter.drawRect(rect.normalized())
 
 
     def mousePressEvent(self, event):
