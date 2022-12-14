@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialo
 
 import read_data
 import user_widgets
+import transform_coord
 
 
 def make_folder(directory):
@@ -28,10 +29,12 @@ class LabelerWindow(QWidget):
 
         # init UI state
         self.title = 'PyQt5 - Box annotation tool'
-        self.width = metadata['cropping_coordinates'][3] - metadata['cropping_coordinates'][2]
-        self.height = metadata['cropping_coordinates'][1] - metadata['cropping_coordinates'][0]
-        self.img_panel_width = self.width
-        self.img_panel_height = self.height
+        self.original_resolution = metadata['original_resolution']
+        self.cropping_coordinates = metadata['cropping_coordinates']
+        self.width_without_scale = self.cropping_coordinates[3] - self.cropping_coordinates[2]
+        self.height_without_scale = self.cropping_coordinates[1] - self.cropping_coordinates[0]
+        self.img_panel_width = self.width_without_scale
+        self.img_panel_height = self.height_without_scale
 
         # state variables
         self.df = df
@@ -43,6 +46,7 @@ class LabelerWindow(QWidget):
         self.img_root = os.path.split(self.img_paths[0])[0]
         self.num_images = len(self.img_paths)
         self.frame_to_jump = int(os.path.split(self.img_paths[0])[-1][:-4])
+        self.start = 0
 
         # labels to identify different polyps
         self.paint_activation = 0
@@ -54,6 +58,15 @@ class LabelerWindow(QWidget):
         # Get path of the master csv
         self.df_path = os.path.join(input_folder, self.video_name[:-4] + '.csv')
 
+        # Get scale factor and position of the image
+        image_attributes = read_data.image_attributes((self.width_without_scale, self.height_without_scale))
+        self.width = image_attributes['width_scaled']
+        self.height = image_attributes['height_scaled']
+        self.factor = image_attributes['reduction_factor']
+        self.position_image_x = image_attributes['position_x']
+        self.position_image_y = image_attributes['position_y']
+
+
         # Initialize Labels
         self.video_name_headline = QLabel('Video: ', self)
         self.video_name_label = QLabel(self.video_name.split('coloscopie_')[-1], self)
@@ -64,9 +77,8 @@ class LabelerWindow(QWidget):
         self.draw_polyp_message = QLabel(self)
         self.jumpto = QLabel('Jump to: ', self)
         self.error_message = QLabel(self)
-
-        # Create a Label for the image
-        self.labelImage = QLabel(self)
+        self.error_message.setFont(QFont('Arial', 9))
+        self.change_image = QLabel('Change image: ', self)
 
         # Jump to QLineEdit
         self.jumpto_user = QLineEdit(self)
@@ -108,59 +120,57 @@ class LabelerWindow(QWidget):
 
     def init_ui(self):
 
-        titleBarHeight = self.style().pixelMetric(
+        self.titleBarHeight = self.style().pixelMetric(
             QStyle.PM_TitleBarHeight,
             QStyleOptionTitleBar(),
             self
         )
         
         self.setWindowTitle(self.title)
-        geometry = QApplication.desktop().availableGeometry()
-        geometry.setHeight(geometry.height() - (titleBarHeight*2))
-        self.setGeometry(geometry)
-        
-        # Draw black rectangle to place the image
-        painter = QPainter(self)
-        painter.setPen(QPen(Qt.black,  5, Qt.DotLine))
-        painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
-        painter.drawRect(0, 0, 1920, 1080)
+        self.geometry = QApplication.desktop().availableGeometry()
+        self.geometry.setHeight(self.geometry.height() - (self.titleBarHeight*2))
+        self.setGeometry(self.geometry)
 
         # video name headline
-        self.video_name_headline.setGeometry(self.img_panel_width + 10, 5, 45, 20)
+        self.video_name_headline.setGeometry(self.img_panel_width + 5, 5, 45, 20)
         self.video_name_headline.setObjectName('headline')
 
         # video name label
-        self.video_name_label.setGeometry(self.img_panel_width, 23, 220, 20)
+        self.video_name_label.setGeometry(self.img_panel_width + 5, 23, 220, 20)
 
         # frame number headline
-        self.frame_number_headline.setGeometry(self.img_panel_width, 50, 50, 20)
+        self.frame_number_headline.setGeometry(self.img_panel_width + 5, 50, 50, 20)
         self.frame_number_headline.setObjectName('headline')
 
         # frame number label
-        self.frame_number_label.setGeometry(self.img_panel_width + 10, 50, 45, 20)
+        self.frame_number_label.setGeometry(self.img_panel_width + 70, 50, 45, 20)
         
         # Draw polyp message
         self.draw_polyp_message.setGeometry(self.img_panel_width + 10, 130, 150, 20)
         self.draw_polyp_message.setObjectName('headline')
 
         # jump to label
-        self.jumpto.setGeometry(self.img_panel_width + 10, 80, 60, 20)
+        self.jumpto.setGeometry(self.img_panel_width + 5, 75, 60, 20)
         self.jumpto.setObjectName('headline')
 
         # jump to editline user
-        self.jumpto_user.setGeometry(self.img_panel_width + 30, 80, 120, 25)
+        self.jumpto_user.setGeometry(self.img_panel_width + 70, 75, 150, 25)
 
         # Error message jump
-        self.error_message.setGeometry(self.img_panel_width +20, 1000, 500, 25)
-        self.error_message.setStyleSheet('color: red; font-weight: bold')
+        self.error_message.setGeometry(self.img_panel_width + 27, 140, 500, 25)
+        self.error_message.setStyleSheet('color: red; font-weight: bold; size')
+
+        # Label of "Change image"
+        self.change_image.setGeometry(self.img_panel_width + 5, 720, 220, 20)
+        self.change_image.setObjectName('headline')
 
         # message that csv was generated
         self.csv_generated_message.setGeometry(self.img_panel_width + 30, 1000, 1200, 20)
         self.csv_generated_message.setStyleSheet('color: #43A047')
 
         # Initiate the ScrollAreas AI and position them
-        self.scroll_gs.setGeometry(self.img_panel_width + 5 , 280, 197, 380)
-        self.scroll_ai.setGeometry(self.img_panel_width + 5, 670, 197, 260)
+        self.scroll_gs.setGeometry(self.img_panel_width + 5 , 330, 220, 300)
+        self.scroll_ai.setGeometry(self.img_panel_width + 5, 175, 220, 150)
 
         # frame_number set text
         frame_number = os.path.split(self.img_paths[self.counter])[-1][:-4]
@@ -172,7 +182,7 @@ class LabelerWindow(QWidget):
 
         # draw line to for better UX
         ui_line = QLabel(self)
-        ui_line.setGeometry(self.img_panel_width + 5, 0, 0, self.img_panel_height)
+        ui_line.setGeometry(self.img_panel_width + 230, 0, 1, self.img_panel_height)
         ui_line.setStyleSheet('background-color: black')
 
         #coordinates Box
@@ -190,7 +200,9 @@ class LabelerWindow(QWidget):
             print("Can't load custom stylesheet.")
 
         # Set the first image with GS and AI annotations if there are:
-        self.annotations = read_data.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels, self.df)
+        self.annotations = read_data.read_annotations(int(os.path.split(self.img_paths[0])[-1][:-4]), self.labels, self.df,
+                                                      self.cropping_coordinates, self.factor, (self.position_image_x, self.position_image_y)
+                                                      )
         self.set_image(self.img_paths[0], self.annotations)
 
 
@@ -229,7 +241,7 @@ class LabelerWindow(QWidget):
                 self.error_message.setText(message)
             
         except ValueError:
-            message = 'Frame number must be an integer. Ex: 27134'
+            message = 'Must be an integer. Ex: 27134'
             self.error_message.setText(message)
     
 
@@ -242,10 +254,10 @@ class LabelerWindow(QWidget):
         
         ##### REINITIALIZE TEXTS AND VARIABLES
         self.draw_polyp_message.setText('')
-        self.paint_activation = 1
+        self.paint_activation = 0
         
         ##### STORE THE ANNOTATIONS / COORDINATES ON THE IMAGE
-        print(self.annotations)
+        #print(self.annotations)
         self.store_annotations()
 
         ##### LOAD THE NEW IMAGE WITH THE PREVIOUS ANNOTATIONS
@@ -257,7 +269,9 @@ class LabelerWindow(QWidget):
             frame_number = filename.split('.')[0].lstrip('0')
 
             # Read the AI predictions and if there are previous annotated GS labels
-            self.annotations = read_data.read_annotations(frame_number, self.labels, self.df)
+            self.annotations = read_data.read_annotations(frame_number, self.labels, self.df,
+                                                      self.cropping_coordinates, self.factor, (self.position_image_x, self.position_image_y)
+                                                      )
             # Set the image
             self.set_image(path, self.annotations) 
     
@@ -270,10 +284,10 @@ class LabelerWindow(QWidget):
 
         ##### REINITIALIZE TEXTS AND VARIABLES
         self.draw_polyp_message.setText('')
-        self.paint_activation = 1
+        self.paint_activation = 0
         
         ##### STORE THE ANNOTATIONS / COORDINATES ON THE IMAGE
-        print(self.annotations)
+        #print(self.annotations)
         self.store_annotations()
 
         ##### LOAD THE NEW IMAGE WITH THE PREVIOUS ANNOTATIONS
@@ -286,7 +300,9 @@ class LabelerWindow(QWidget):
                 frame_number = filename.split('.')[0].lstrip('0')
 
                 # Read the AI predictions and if there are previous annotated GS labels
-                self.annotations = read_data.read_annotations(frame_number, self.labels, self.df)
+                self.annotations = read_data.read_annotations(frame_number, self.labels, self.df,
+                                                      self.cropping_coordinates, self.factor, (self.position_image_x, self.position_image_y)
+                                                      )
                 # Set the image
                 self.set_image(path, self.annotations)                 
 
@@ -295,6 +311,7 @@ class LabelerWindow(QWidget):
         stores the current annotations to the database
         stores the current coordinates of each polyp
         '''
+        
         ##### ANNOTATIONS
         # We obtain the frame number as a string because dtype in df of "frame" is object
         frame_number_base7 = os.path.split(self.img_paths[self.counter])[-1].split('.')[0]
@@ -302,7 +319,7 @@ class LabelerWindow(QWidget):
             frame_number = '0'
         else:
             frame_number = frame_number_base7.lstrip('0')
-        
+
         # index of the frame number of the database
         df_index = self.df[self.df['frame'] == frame_number].index[0]
         
@@ -311,21 +328,16 @@ class LabelerWindow(QWidget):
             if key != 'polyp':
                 self.df.at[df_index, '{}_gs'.format(key)] = int(value)
 
-        ##### COORDINATES
+        ##### COORDINATES (bounding boxes)
         # If there is any annotation
         if 'polyp' in self.annotations['gs_annotations']:
-            # rescale the coordinates from 1650,928 to 1920,1080
-            rescaled_coordinates = []
-            factor = 1.16363
             
-            for polyp_id, coordinate in self.annotations['gs_annotations']['polyp']:
-                x = int(round(coordinate[0]*factor))
-                y = int(round(coordinate[1]*factor))
-                width = int(round(coordinate[2]*factor))
-                height = int(round(coordinate[3]*factor))
+            coordinates = self.annotations['gs_annotations']['polyp']
 
-                rescaled_coordinates.append((polyp_id, (x,y,width, height)))
-
+            # rescale and reorient the coordinates from p2p to original coordinates
+            rescaled_coordinates = transform_coord.pqp2original(coordinates, self.cropping_coordinates,
+                                                                self.factor, (self.position_image_x, self.position_image_y)
+            )
             self.df.at[df_index, 'polyp_gs'] = rescaled_coordinates
 
 
@@ -338,12 +350,11 @@ class LabelerWindow(QWidget):
         """
       
         ##### UPDATE IMAGE      
+        # Image scaled in height to make sure is entirely displayed laptops.
         self.pix = QPixmap(path)
-        img_width = self.pix.width()
-        img_height = self.pix.height()
-        self.pix = self.pix.scaledToHeight(980)
+        self.pix = self.pix.scaledToHeight(self.height)
 
-        ##### UPDATE COORDINATE ANNOTATIONS
+        #### UPDATE COORDINATE ANNOTATIONS
         # Coordinates need to be drawn in case of polyp annotations
         # The bounding boxes will be drawn with different pen colors depending on the id of the polyp
         if 'polyp' in annotations['gs_annotations']:
@@ -354,7 +365,7 @@ class LabelerWindow(QWidget):
                 coordinates = polyp[1]
                 penRectangle = QPen(user_widgets.colors_polyp(polyp[0]), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
                 painterInstance.setPen(penRectangle)
-                print('Painting coordinates: {}'.format(coordinates))
+                #print('Painting coordinates: {}'.format(coordinates))
                 rect = QRect(coordinates[0], coordinates[1], coordinates[2], coordinates[3])
                 painterInstance.drawRect(rect)
 
@@ -374,8 +385,6 @@ class LabelerWindow(QWidget):
         # Mark in green the buttons
         self.set_button_color()
         
-        self.labelImage.setPixmap(self.pix)
-        #self.labelImage.move(0, 0)
         self.update()
     
     
@@ -462,35 +471,43 @@ class LabelerWindow(QWidget):
 
 
     def paintEvent(self, event):
+        
+        # Draw a black rectangle for the background
+        painter = QPainter(self)
+        painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+        painter.drawRect(0, 0, self.img_panel_width, self.img_panel_height)
+        
+        # Draw the image
+        painter.drawPixmap(QPoint(self.position_image_x, self.position_image_y), self.pix)
+
+        # To draw the coordinates of mouse events
         if self.paint_activation == 1 and self.polyp_id != 0:
-            painter = QPainter(self)       
-            painter.drawPixmap(QPoint(), self.pixmap)
+            #if not self.begin.isNull() and not self.destination.isNull():
+            if ((abs(self.begin.x() - self.destination.x()) > 10) and (abs(self.begin.x() - self.destination.x()) > 10)):
+                try:
+                    pen = QPen(user_widgets.colors_polyp(self.polyp_id), 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
+                except KeyError:
+                    pen = QPen(Qt.green, 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
+                
+                painter.setPen(pen)
+                rect = QRect(self.begin, self.destination)
+                painter.drawRect(rect.normalized())
 
-            if self.paint_activation == 1 and self.polyp_id != 0:
-                #if not self.begin.isNull() and not self.destination.isNull():
-                if ((abs(self.begin.x() - self.destination.x()) > 10) and (abs(self.begin.x() - self.destination.x()) > 10)):
-                    try:
-                        pen = QPen(user_widgets.colors_polyp(self.polyp_id), 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
-                    except KeyError:
-                        pen = QPen(Qt.green, 3, Qt.DashDotLine, Qt.RoundCap, Qt.RoundJoin)
-
-                    painter.setPen(pen)
-                    rect = QRect(self.begin, self.destination)
-                    painter.drawRect(rect.normalized())
+        # To draw the coordinates of 
 
 
     def mousePressEvent(self, event):
-
         if self.paint_activation == 1 and self.polyp_id != 0:
             if event.buttons() & Qt.LeftButton:
+                print('Point 1')
                 self.begin = event.pos()
                 self.destination = self.begin
                 self.update()
         
-    def mouseMoveEvent(self, event):
-        
+    def mouseMoveEvent(self, event):     
         if self.paint_activation == 1 and self.polyp_id != 0:
             if event.buttons() & Qt.LeftButton:
+                print('Point 2')
                 self.destination = event.pos()
                 self.update()
 
@@ -499,9 +516,12 @@ class LabelerWindow(QWidget):
             if event.button() & Qt.LeftButton:
                 # Print the rectangle only in case is bigger than a threshold:
                 if ((abs(self.begin.x() - self.destination.x()) > 10) and (abs(self.begin.x() - self.destination.x()) > 10)):
-                    rect = QRect(self.begin, self.destination)
-                    painter = QPainter(self.pixmap)
+                    # Update begin and destination because of the movement of centering the screen
+                    self.begin += QPoint(-self.position_image_x, -self.position_image_y)
+                    self.destination += QPoint(-self.position_image_x, -self.position_image_y)
                     
+                    rect = QRect(self.begin, self.destination)
+                    painter = QPainter(self.pix)
                     try:
                         pen = QPen(user_widgets.colors_polyp(self.polyp_id), 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
                     except KeyError:

@@ -4,7 +4,14 @@ labels = ["polyp", "needle", "grasper", "snare", "clip"]
 extra_labels = ["wound", "outside", "ileum"]
 
 # Maximum number of polyps possible to annotate (currently not used)
-# max_polyp = 8
+# max_polyp=8
 
 # Colors of polyps id
 colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}
+
+# scale factor image. 900 < scale_image_by_height < 1000
+scale_image_by_height=980
+
+# position in the screen. Values must be between 0<x<100 and 0<y50.
+position_x =40
+position_y =20

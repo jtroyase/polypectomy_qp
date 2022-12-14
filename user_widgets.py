@@ -106,21 +106,21 @@ def init_buttons(window, panel_width, df_path, labels):
 
      # Add "Prev Image" and "Next Image" buttons    
      prev_im_btn = QtWidgets.QPushButton("Prev", window)
-     prev_im_btn.move(panel_width - 115, 965)
+     prev_im_btn.move(panel_width + 20, 750)
      prev_im_btn.clicked.connect(window.show_prev_image)
 
      next_im_btn = QtWidgets.QPushButton("Next", window)
-     next_im_btn.move(panel_width-30, 965)
+     next_im_btn.move(panel_width+120, 750)
      next_im_btn.clicked.connect(window.show_next_image)
 
      # Add "Paint polyp" button
      paint_polyp_btn = QtWidgets.QPushButton("Paint polyp", window)
-     paint_polyp_btn.move(panel_width + 110, 200)
+     paint_polyp_btn.move(panel_width + 75, 650)
      paint_polyp_btn.clicked.connect(window.draw_polyp)
 
      # Add "Reset boxes" button
      reset_btn = QtWidgets.QPushButton("Reset boxes", window)
-     reset_btn.move(panel_width + 110, 170)
+     reset_btn.move(panel_width + 75, 680)
      reset_btn.clicked.connect(window.reset_box)
 
      # Add "Open" button to load a new file
@@ -146,13 +146,13 @@ def init_buttons(window, panel_width, df_path, labels):
 
      # Add "generate csv file" button
      next_im_btn = QtWidgets.QPushButton("Generate csv", window)
-     next_im_btn.move(panel_width + 95, 940)
+     next_im_btn.move(panel_width + 80, 940)
      next_im_btn.clicked.connect(lambda state, filename=df_path: window.generate_csv(filename))
      next_im_btn.setObjectName("blueButton")
 
      # Add "Jump" button
      jump_btn = QtWidgets.QPushButton("Jump", window)
-     jump_btn.move(panel_width - 780, 970)
+     jump_btn.move(panel_width + 75, 110)
      jump_btn.clicked.connect(window.toJump)
 
      # create button for each label except for polyp

@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import ast
 import json
+import user_widgets
+import transform_coord
 
 def get_img_paths(dir, df, extensions=('.jpg', '.png', '.jpeg')):
     '''
@@ -76,15 +78,16 @@ def get_database(folder, labels):
     with open(os.path.join(folder, json_files[0])) as f:
         metadata = json.load(f)
 
-    print(metadata)
-
     return df, metadata
 
-def read_annotations(frame_number, labels, df):
+def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_factor, image_position):
     '''
     :param frame_number: Number of the frame to read annotations
     :param labels: which labels should we return
     :param df: dataframe to read the labels from
+    :param cropping_coordinates: [y0, y1, x1, x2] pixels cropped from original image
+    :param reduction_factor: factor used to reduce the image (both x and y dimensions)
+    :param image_position: (x,y) traslation of the image in pixels in each dimension
     :return: dictionary containing two keys
         "gs_annotations": dictionary containing gs annotations for each requested label
         "ai_predictions": dictionary containing ai predictions for each requested label
@@ -102,20 +105,9 @@ def read_annotations(frame_number, labels, df):
             polyp_gs = df.loc[df['frame'] == str(frame_number)]['polyp_gs'].values
             if polyp_gs:
                 if type(polyp_gs[0])==list:
-
-                    # The coordinates need to be normalized from 1920x1080 to 1650
-                    rescaled_coordinates = []
-                    
-                    for polyp_id, coordinates in polyp_gs[0]:
-                        x = int(coordinates[0]*0.8594)
-                        y = int(coordinates[1]*0.8594)
-                        width = int(coordinates[2]*0.8594)
-                        height = int(coordinates[3]*0.8594)
-                        
-                        rescaled_coordinates.append((polyp_id, (x,y,width, height)))
-
+                    # Transform the coordinates to match the resolution of the pqp program
+                    rescaled_coordinates = transform_coord.original2pqp(polyp_gs[0], cropping_coordinates, reduction_factor, image_position)
                     annotations_output['gs_annotations']['polyp'] = rescaled_coordinates
-                    
                 else:
                     print('In read_data, the type of coordinates is not a list anymore')
                     polyp_gs = ast.literal_eval(polyp_gs[0])
@@ -137,4 +129,57 @@ def read_annotations(frame_number, labels, df):
     
     return annotations_output
 
-get_database('/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/coloscopie_2021-03-23_15-00-16_Ludwig_crop', ['grasper'])
+
+def image_attributes(original_resolution):
+    '''
+    Read the config file for the scale by height factor
+    and the image positioning in x and y
+    and return the width and height of the image when scaled
+    the factor by which the image was reduced
+    :param original_resolution: (PIX_in_x, PIX_in_y)
+    :return output: {'width_scaled', 'height_scaled', 
+                    'reduction_factor', 'position_x',
+                    'position_y'}
+    '''
+
+    # Read scaling parameter
+    out_config = user_widgets.read_config('scale_image_by_height')
+
+    if out_config:
+        try:
+            scale_image_by_height = int(out_config.split('=')[1])
+            # Check that the scale_image_by_height is in the scale
+            if not 899 < scale_image_by_height < 1001:
+                raise ValueError('scale_image_by_height value must be between 900 and 1000')
+        except:
+            raise ValueError('scale_image_by_height must contain an integer value')
+    else:
+        raise OSError('scale_image_by_height value missing in the config')
+
+    factor = scale_image_by_height/original_resolution[1]
+
+    # Read image position
+    out_pos_x = user_widgets.read_config('position_x')
+    out_pos_y = user_widgets.read_config('position_y')
+
+    if out_pos_x and out_pos_y:
+        try:
+            position_x = int(out_pos_x.split('=')[1])
+            position_y = int(out_pos_y.split('=')[1])
+            if not (0<=position_x<=100 and 0<=position_y<=50):
+                raise ValueError('Image position values out of the allowed range. Check config.')
+        except:
+            raise ValueError('Image position values need to be integers')
+    else:
+        raise OSError('position_x or position_y values are missing in the config file')
+
+    output = {'width_scaled': int(factor*original_resolution[0]),
+              'height_scaled': scale_image_by_height,
+              'reduction_factor': factor,
+              'position_x':position_x,
+              'position_y':position_y
+              }
+
+    return output
+
+        
