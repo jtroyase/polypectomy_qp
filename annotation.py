@@ -146,7 +146,7 @@ class LabelerWindow(QWidget):
         self.frame_number_label.setGeometry(self.img_panel_width + 70, 50, 45, 20)
         
         # Draw polyp message
-        self.draw_polyp_message.setGeometry(self.img_panel_width + 10, 130, 150, 20)
+        self.draw_polyp_message.setGeometry(self.img_panel_width + 5, 680, 150, 20)
         self.draw_polyp_message.setObjectName('headline')
 
         # jump to label
@@ -161,7 +161,7 @@ class LabelerWindow(QWidget):
         self.error_message.setStyleSheet('color: red; font-weight: bold; size')
 
         # Label of "Change image"
-        self.change_image.setGeometry(self.img_panel_width + 5, 720, 220, 20)
+        self.change_image.setGeometry(self.img_panel_width + 5, 750, 220, 20)
         self.change_image.setObjectName('headline')
 
         # message that csv was generated
@@ -184,9 +184,6 @@ class LabelerWindow(QWidget):
         ui_line = QLabel(self)
         ui_line.setGeometry(self.img_panel_width + 230, 0, 1, self.img_panel_height)
         ui_line.setStyleSheet('background-color: black')
-
-        #coordinates Box
-        self.box_coordinates = []
 
         # create buttons
         self.label_buttons = user_widgets.init_buttons(self, self.img_panel_width, self.df_path, self.labels)
@@ -282,23 +279,28 @@ class LabelerWindow(QWidget):
         loads and shows previous image in dataset
         """
 
-        ##### REINITIALIZE TEXTS AND VARIABLES
-        self.draw_polyp_message.setText('')
-        self.paint_activation = 0
-        
-        ##### STORE THE ANNOTATIONS / COORDINATES ON THE IMAGE
-        #print(self.annotations)
-        self.store_annotations()
-
-        ##### LOAD THE NEW IMAGE WITH THE PREVIOUS ANNOTATIONS
+        # Check if it is the first image
         if self.counter > 0:
             self.counter -= 1
 
             if self.counter < self.num_images:
+                
+                print(self.counter, self.num_images)
+                # Reinitialize texts and variables
+                self.draw_polyp_message.setText('')
+                self.paint_activation = 0
+            
+                # Store the annotations / coordinates on the image
+                self.store_annotations()
+                
+                # Load the new image with the previous annotations
                 path = self.img_paths[self.counter]
                 filename = os.path.split(path)[-1]
-                frame_number = filename.split('.')[0].lstrip('0')
-
+                if filename.endswith('0.jpg'):
+                    frame_number = '0'
+                else:
+                    frame_number = filename.split('.')[0].lstrip('0')
+                
                 # Read the AI predictions and if there are previous annotated GS labels
                 self.annotations = read_data.read_annotations(frame_number, self.labels, self.df,
                                                       self.cropping_coordinates, self.factor, (self.position_image_x, self.position_image_y)
@@ -330,6 +332,7 @@ class LabelerWindow(QWidget):
 
         ##### COORDINATES (bounding boxes)
         # If there is any annotation
+        print(self.annotations)
         if 'polyp' in self.annotations['gs_annotations']:
             
             coordinates = self.annotations['gs_annotations']['polyp']
@@ -447,27 +450,23 @@ class LabelerWindow(QWidget):
         Remove the coordinate boxes from the master database
         '''
 
-        current_image_path = self.img_paths[self.counter]
-        self.box_coordinates = []        
-        
-        # set the image without boxes
-        self.set_image(current_image_path, {'Goldstandard coord':[]}, False)
+        # Load the new image with the previous annotations
+        path = self.img_paths[self.counter]
+        filename = os.path.split(path)[-1]
+        if filename.endswith('0.jpg'):
+            frame_number = '0'
+        else:
+            frame_number = filename.split('.')[0].lstrip('0')
 
-        # remove the coordinaates from database
-        frame_number = int(os.path.split(current_image_path)[-1].split('.'))
-        
-        try:
-            index = self.df.loc[self.df['frame'] == frame_number].index
-            self.df.at[index, 'Goldstandard coord'] = float("nan")
-        except:
-            raise ValueError('Coordinates could not be eliminated on dataframe')
+        # Reset the boxes
+        if 'polyp' in self.annotations['gs_annotations']:
+            del self.annotations['gs_annotations']['polyp']
 
-        # We need to add the frame to the pending annotation
-        if frame_number not in self.pending_annotations: #Then it means we have to create the button again
-            self.btn = QtWidgets.QPushButton('Frame {}'.format(frame_number), self)
-            self.pending_annotations[frame_number] = self.btn
-            self.btn.clicked.connect(lambda state, im_path=os.path.join(self.img_root, str(frame_number)) + '.jpg', coord = {'Goldstandard coord':[]}: self.set_image(im_path, coord, False))
-            self.formLayout.addRow(self.btn)
+        # Store the annotations
+        self.store_annotations()
+
+        # Set the image
+        self.set_image(path, self.annotations) 
 
 
     def paintEvent(self, event):

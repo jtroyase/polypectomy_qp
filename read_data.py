@@ -97,6 +97,7 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
                           'ai_predictions':{}
                           }
     
+
     for lab in labels:
         # If it is for polyp, the format is different because it contains coordinates
         # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
@@ -119,12 +120,12 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
                 annotations_output['ai_predictions']['polyp'] = polyp_ai[0]
 
         else:
-            l_gs = df.loc[df['frame'] == str(frame_number)]['{}_gs'.format(lab)].values
-            l_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format(lab)].values
+            l_gs = df.loc[df['frame'] == str(frame_number)]['{}_gs'.format(lab)].values[0]
+            l_ai = df.loc[df['frame'] == str(frame_number)]['{}'.format(lab)].values[0]
             if l_gs == 1 or l_gs == 2:
-                annotations_output['gs_annotations'][lab] = l_gs[0]
-            if l_ai == 1 or l_gs == 2:
-                annotations_output['ai_predictions'][lab] = l_ai[0]
+                annotations_output['gs_annotations'][lab] = l_gs
+            if l_ai == 1 or l_ai == 2:
+                annotations_output['ai_predictions'][lab] = l_ai
 
     
     return annotations_output
