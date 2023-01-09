@@ -80,6 +80,17 @@ def colors_polyp(id):
      return color
 
 
+def label_color(label):
+     '''
+     Returns the color assigned in the config file for
+     that particular label
+     '''
+     colors_id = '{' + read_config('label_colors').split('{')[1]
+     colors = ast.literal_eval(colors_id)
+
+     return colors[label]
+
+
 def read_config(label):
      '''
      Reads the line of the config file that starts
@@ -172,5 +183,55 @@ def init_buttons(window, panel_width, df_path, labels):
           window.formLayout_gs.addRow(button)
 
      return label_buttons
+
+
+def position_widgets(window, img_panel_width, img_panel_height):
+
+     # video name headline
+     window.video_name_headline.setGeometry(img_panel_width + 5, 5, 45, 20)
+     window.video_name_headline.setObjectName('headline')
+
+     # video name label
+     window.video_name_label.setGeometry(img_panel_width + 5, 23, 220, 20)
+
+     # frame number headline
+     window.frame_number_headline.setGeometry(img_panel_width + 5, 50, 50, 20)
+     window.frame_number_headline.setObjectName('headline')
+
+     # frame number label
+     window.frame_number_label.setGeometry(img_panel_width + 70, 50, 45, 20)
+
+     # Draw polyp message
+     window.draw_polyp_message.setGeometry(img_panel_width + 5, 680, 150, 20)
+     window.draw_polyp_message.setObjectName('headline')
+
+     # jump to label
+     window.jumpto.setGeometry(img_panel_width + 5, 75, 60, 20)
+     window.jumpto.setObjectName('headline')
+
+     # jump to editline user
+     window.jumpto_user.setGeometry(img_panel_width + 70, 75, 150, 25)
+
+     # Error message jump
+     window.error_message.setGeometry(img_panel_width + 27, 140, 500, 25)
+     window.error_message.setStyleSheet('color: red; font-weight: bold; size')
+
+     # Label of "Change image"
+     window.change_image.setGeometry(img_panel_width + 5, 750, 220, 20)
+     window.change_image.setObjectName('headline')
+
+     # message that csv was generated
+     window.csv_generated_message.setGeometry(img_panel_width + 30, 1000, 1200, 20)
+     window.csv_generated_message.setStyleSheet('color: #43A047')
+
+     # Initiate the ScrollAreas AI and position them
+     window.scroll_gs.setGeometry(img_panel_width + 5 , 330, 220, 300)
+     window.scroll_ai.setGeometry(img_panel_width + 5, 175, 220, 150)
+
+     # draw line for better UX
+     ui_line = QLabel(window)
+     ui_line.setGeometry(img_panel_width + 230, 0, 1, img_panel_height)
+     ui_line.setStyleSheet('background-color: black')
+
 
 
