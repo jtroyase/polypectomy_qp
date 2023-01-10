@@ -5,7 +5,7 @@ import numpy as np
 import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
-from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont, QBrush
+from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont, QBrush, QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
      QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup, QTableWidget, \
      QTableWidgetItem, QStyle, QStyleOptionTitleBar
@@ -15,6 +15,7 @@ import pyqtgraph as pg
 import read_data
 import user_widgets
 import transform_coord
+
 
 
 def make_folder(directory):
@@ -118,54 +119,20 @@ class LabelerWindow(QWidget):
         self.begin, self.destination = QPoint(), QPoint()
 
         # Create plot
-        self.plot = pg.PlotWidget(self)
-        self.plot.setTitle("Your annotations", color="black", size="15pt")
-        self.plot.setGeometry(self.img_panel_width + 225, 5, 260, 1015)
-        self.plot.setBackground((240,240,240,255)) # Set color to same background
-        #self.plot.hideAxis('bottom')
-        #self.plot.hideAxis('left')
-        self.plot.setXRange(0, len(self.labels) - 1)
-        
-        x_axis = self.plot.getAxis('bottom')
-        x_axis.setLabel('Labels')
-        font = QFont()
-        font.setPointSize(7)
-        x_axis.setStyle(tickFont=font)
-
-        y_axis = self.plot.getAxis('left')
-        font = QFont()
-        font.setPointSize(6)
-        y_axis.setStyle(tickFont=font)
-
-        # Create a ScatterPlotItem for each label except polyp
-        self.plot_items = {}
-
-        x_ticks = [[(0, 'AI')]]
-        for i, label in enumerate(self.labels):
-            if label != 'polyp':
-                
-                # Create ScatterPlotItem for goldstandard annotation
-                self.plot_items[label + '_start'] = pg.ScatterPlotItem()
-                self.plot.addItem(self.plot_items[label + '_start'])
-
-                self.plot_items[label + '_stop'] = pg.ScatterPlotItem()
-                self.plot.addItem(self.plot_items[label + '_stop'])
-
-                # Create ScatterPlotItem for AI
-                self.plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': user_widgets.label_color(label)}
-                self.plot.addItem(self.plot_items[label]['scatter'])
-
-                x_ticks[0].append((i, label))
-
-            else:
-                # Create ScatterPlotItem for AI
-                self.plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': user_widgets.label_color(label)}
-                self.plot.addItem(self.plot_items[label]['scatter'])
-
-        x_axis.setTicks(x_ticks)
+        self.plot, self.plot_items = user_widgets.your_annotations_plot(self, self.labels, self.img_panel_width)
 
         # set a plot and the data for the AI
         self.ai_plot()
+
+        # Add legend
+        self.items = [user_widgets.LegendItem("Item 1", QColor(255, 0, 0)),
+                      user_widgets.LegendItem("Item 2", QColor(0, 255, 0)),
+                      user_widgets.LegendItem("Item 3", QColor(0, 0, 255))]
+
+        self.legend = user_widgets.Legend(self.items)
+        print(self.legend)
+        print(type(self.legend))
+        #self.setCentralWidget(self.legend)
 
         # init UI
         self.init_ui()
@@ -198,18 +165,29 @@ class LabelerWindow(QWidget):
                     
                     # We plot the starts
                     if len(starts)>0:
-                        x_array = [x_position for _ in range(len(starts))]
+                        x_array = [x_position + 1 for _ in range(len(starts))]
                         y_array = [int(x) for x in starts]
                         pen=pg.mkPen(color=(0,200,0), width=3)
                         self.plot_items[label + '_start'].setData(x=x_array, y=y_array, pen=pen)
       
                     # We plot the ends
                     if len(stops)>0:
-                        x_array = [x_position for _ in range(len(stops))]
+                        x_array = [x_position + 1 for _ in range(len(stops))]
                         y_array = [int(x) for x in stops]
                         pen=pg.mkPen(color='r', width=2)
                         self.plot_items[label + '_stop'].setData(x=x_array, y=y_array, pen=pen)
-                        
+
+            else:
+                if label + '_gs' in self.df.columns:
+                    mask = pd.notnull(self.df[label+'_gs'])
+                    df_without_none = self.df[mask]
+                    frames_without_none = df_without_none['frame'].values
+
+                    if len(frames_without_none)>0:
+                        x_array = [x_position + 1 for _ in range(len(frames_without_none))]
+                        y_array = [int(x) for x in frames_without_none]
+                        pen=pg.mkPen(color='g', width=2)
+                        self.plot_items[label + '_gs'].setData(x=x_array, y=y_array, pen=pen)                        
 
     def init_ui(self):
 

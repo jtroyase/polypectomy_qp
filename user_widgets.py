@@ -1,14 +1,50 @@
 import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
-from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen
+from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
      QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup, QGridLayout, \
      QHBoxLayout
 
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
+
 import ast
 import annotation
 
+class LegendItem(QtWidgets.QWidget):
+    def __init__(self, text, color, parent=None):
+        super().__init__(parent)
+        self.text = text
+        self.color = color
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        rect = event.rect()
+        rect.setWidth(20)  # width of the color square
+        painter.fillRect(rect, self.color)  # paint the color square
+
+        font = painter.font()
+        font.setBold(True)
+        painter.setPen(QColor("red"))
+        painter.setFont(QFont("Arial", 16))
+        rect = QtCore.QRect(10, 10, 90, 25)
+        painter.drawText(rect, QtCore.Qt.AlignCenter, self.text)
+
+class Legend(QtWidgets.QWidget):
+    def __init__(self, items, parent=None):
+        super().__init__(parent)
+        self.items = items
+        self._layout = QtWidgets.QVBoxLayout(self)
+        self._layout.setContentsMargins(5,5,5,5)
+        self._layout.setSpacing(5)
+        self.create_items()
+
+    def create_items(self):
+        for item in self.items:
+            self._layout.addWidget(item)
 
 def init_label_checkboxes(window):
      '''
@@ -234,4 +270,55 @@ def position_widgets(window, img_panel_width, img_panel_height):
      ui_line.setStyleSheet('background-color: black')
 
 
+def your_annotations_plot(window, labels, img_panel_width):
 
+     plot = pg.PlotWidget(window)
+     plot.setTitle("Your annotations", color="black", size="15pt")
+     plot.setGeometry(img_panel_width + 227, 5, 265, 1015)
+     plot.setBackground((240,240,240,255)) # Set color to same background
+     #self.plot.hideAxis('bottom')
+     #self.plot.hideAxis('left')
+     plot.setXRange(0, len(labels))
+     
+     x_axis = plot.getAxis('bottom')
+     x_axis.setLabel('Labels')
+     font = QFont()
+     font.setPointSize(7)
+     x_axis.setStyle(tickFont=font)
+
+     y_axis = plot.getAxis('left')
+     font = QFont()
+     font.setPointSize(6)
+     y_axis.setStyle(tickFont=font)
+     #y_axis.tickTextOffset = 0
+
+     # Create a ScatterPlotItem for each label except polyp
+     plot_items = {}
+
+     x_ticks = [[(0, 'AI')]]
+     for i, label in enumerate(labels):
+          x_ticks[0].append((i+1, label))
+          if label != 'polyp':
+               # Create ScatterPlotItem for goldstandard annotation
+               plot_items[label + '_start'] = pg.ScatterPlotItem()
+               plot.addItem(plot_items[label + '_start'])
+
+               plot_items[label + '_stop'] = pg.ScatterPlotItem()
+               plot.addItem(plot_items[label + '_stop'])
+
+               # Create ScatterPlotItem for AI
+               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)}
+               plot.addItem(plot_items[label]['scatter'])
+
+          else:
+               # Create ScatterPlotItem for polyp for goldstandard annotation
+               plot_items[label + '_gs'] = pg.ScatterPlotItem()
+               plot.addItem(plot_items[label + '_gs'])
+
+               # Create ScatterPlotItem for polyp AI
+               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)}
+               plot.addItem(plot_items[label]['scatter'])
+
+     x_axis.setTicks(x_ticks)
+
+     return plot, plot_items
