@@ -3,6 +3,9 @@
 labels = ["polyp", "needle", "grasper", "snare", "clip"]
 extra_labels = ["wound", "outside", "ileum"]
 
+# Instruments to resect
+instruments = ["cold snare", "hot snare", "grasper", "end resection"]
+
 # Colors for the labels
 label_colors = {'polyp':'green', 'needle':'red', 'grasper':'blue', 'snare':'magenta', 'clip':'cyan', 'wound':'yellow', 'outside':'gray', 'ileum':'black'}
 
@@ -13,9 +16,8 @@ label_colors = {'polyp':'green', 'needle':'red', 'grasper':'blue', 'snare':'mage
 colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}
 
 # scale factor image. 900 < scale_image_by_height < 1000
-scale_image_by_height=980
+scale_image_by_height=1000
 
 # position in the screen. Values must be between 0<x<100 and 0<y50.
-position_x =40
+position_x =30
 position_y =20
-

@@ -66,6 +66,10 @@ def get_database(folder, labels):
         if label + '_gs' not in df.columns.to_list():
             df[label+'_gs']= None
 
+    # If the database does not have column for resection, create it
+    if 'resection' not in df.columns.to_list():
+        df['resection']=None
+
     # Read the metadata
     json_files = []
     [json_files.append(file) for file in os.listdir(folder) if file.endswith('.json')]
@@ -97,7 +101,7 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
                           'ai_predictions':{}
                           }
     
-
+    # This is to read the data for ai predictions and labels, NOT RESECTION
     for lab in labels:
         # If it is for polyp, the format is different because it contains coordinates
         # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
@@ -126,6 +130,11 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
                 annotations_output['gs_annotations'][lab] = l_gs
             if l_ai == 1 or l_ai == 2:
                 annotations_output['ai_predictions'][lab] = l_ai
+
+    # Resection instrument labels
+    instruments = ast.literal_eval('[' + user_widgets.read_config('instruments').split('[')[1])
+
+    print(df.loc[df['frame'] == str(frame_number)]['resection'])
 
     
     return annotations_output

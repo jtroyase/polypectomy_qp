@@ -13,10 +13,10 @@ if __name__ == '__main__':
     # ex.show()
     # sys.exit(app.exec_())
 
-    # SHOOOORTCUT
+    #SHOOOORTCUT
     app = QApplication(sys.argv)
     selected_folder = '/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/coloscopie_2021-03-23_15-00-16_Ludwig_crop'
-    labels_to_annotate = ['polyp', 'needle', 'grasper', 'snare', 'clip']
+    labels_to_annotate = ['polyp', 'needle', 'grasper', 'snare', 'clip', 'wound', 'ileum']
     df, metadata = get_database(selected_folder, labels_to_annotate)
     ex = LabelerWindow(df, selected_folder, labels_to_annotate, metadata)
     ex.show()

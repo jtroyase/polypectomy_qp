@@ -78,42 +78,59 @@ class LabelerWindow(QWidget):
         self.frame_number_headline = QLabel('Frame: ', self)
         self.frame_number_label = QLabel(self)
         self.csv_generated_message = QLabel(self)
-        self.draw_polyp_message = QLabel(self)
+        self.draw_polyp_message = QLabel('Press button to draw polyp:', self)
         self.jumpto = QLabel('Jump to: ', self)
+        self.your_annotations = QLabel('Your Annotations', self)
+        self.comment_label = QLabel('Comments: ', self)
         self.error_message = QLabel(self)
         self.error_message.setFont(QFont('Arial', 9))
         self.change_image = QLabel('Change image: ', self)
 
         # Jump to QLineEdit
         self.jumpto_user = QLineEdit(self)
+        self.jumpto_user.returnPressed.connect(self.toJump)
+
+        # Insert comment QLinEdit
+        self.insert_comment = QLineEdit(self)
+        self.insert_comment.returnPressed.connect(self.on_return_pressed)
 
         ##### SCROLL TO VISUALIZE ANNOTATIONS/PREDICTIONS
         # layouts
-        self.formLayout_gs =QFormLayout()
-        self.formLayout_ai =QFormLayout()
+        self.formLayout_ai = QFormLayout()
+        self.formLayout_resection = QFormLayout()
+        self.formLayout_labels = QFormLayout()
 
         # scroll areas
-        self.scroll_gs = QScrollArea(self)
         self.scroll_ai = QScrollArea(self)
+        self.scroll_resection = QScrollArea(self)
+        self.scroll_labels = QScrollArea(self)
         
         # GroupBoxs
-        self.groupBox_gs = QGroupBox()
         self.groupBox_ai = QGroupBox()
-        self.groupBox_gs.setTitle('Annotations:')
-        self.groupBox_gs.setStyleSheet('font-weight: bold')
+        self.groupBox_resection = QGroupBox()
+        self.groupBox_labels = QGroupBox()
         self.groupBox_ai.setTitle('AI predictions:')
         self.groupBox_ai.setStyleSheet('font-weight: bold')
-
-        self.groupBox_gs.setLayout(self.formLayout_gs)
-        self.scroll_gs.setWidget(self.groupBox_gs)
-        self.scroll_gs.setWidgetResizable(True)
-
+        self.groupBox_resection.setTitle('Resection:')
+        self.groupBox_resection.setStyleSheet('font-weight: bold')
+        self.groupBox_labels.setTitle('Labels:')
+        self.groupBox_labels.setStyleSheet('font-weight: bold')
+        
         self.groupBox_ai.setLayout(self.formLayout_ai)
         self.scroll_ai.setWidget(self.groupBox_ai)
         self.scroll_ai.setWidgetResizable(True)
+ 
+        self.groupBox_resection.setLayout(self.formLayout_resection)
+        self.scroll_resection.setWidget(self.groupBox_resection)
+        self.scroll_resection.setWidgetResizable(True)
 
+        self.groupBox_labels.setLayout(self.formLayout_labels)
+        self.scroll_labels.setWidget(self.groupBox_labels)
+        self.scroll_labels.setWidgetResizable(True)
+        
         self.groupBox_ai.setStyleSheet('background: palette(window)')
-        self.groupBox_gs.setStyleSheet('background: palette(window)')
+        self.groupBox_resection.setStyleSheet('background: palette(window)')
+        self.groupBox_labels.setStyleSheet('background: palette(window)')
 
         # Create two point instances
         self.begin, self.destination = QPoint(), QPoint()
@@ -125,15 +142,11 @@ class LabelerWindow(QWidget):
         self.ai_plot()
 
         # Add legend
-        self.items = [user_widgets.LegendItem("Item 1", QColor(255, 0, 0)),
-                      user_widgets.LegendItem("Item 2", QColor(0, 255, 0)),
-                      user_widgets.LegendItem("Item 3", QColor(0, 0, 255))]
-
-        self.legend = user_widgets.Legend(self.items)
-        print(self.legend)
-        print(type(self.legend))
-        #self.setCentralWidget(self.legend)
-
+        self.items = [user_widgets.LegendItem("Item 1", QColor(255, 0, 0), self),
+                      user_widgets.LegendItem("Item 2", QColor(0, 255, 0), self),
+                      user_widgets.LegendItem("Item 3", QColor(0, 0, 255), self)]
+        
+    
         # init UI
         self.init_ui()
 
@@ -201,6 +214,7 @@ class LabelerWindow(QWidget):
         self.geometry = QApplication.desktop().availableGeometry()
         self.geometry.setHeight(self.geometry.height() - (self.titleBarHeight*2))
         self.setGeometry(self.geometry)
+        self.setWindowFlag(Qt.FramelessWindowHint)
 
         # Position all the widgets in the screen
         user_widgets.position_widgets(self, self.img_panel_width, self.img_panel_height)
@@ -214,7 +228,7 @@ class LabelerWindow(QWidget):
         self.frame_number_label.setText(frame_number)
 
         # create buttons
-        self.label_buttons = user_widgets.init_buttons(self, self.img_panel_width, self.df_path, self.labels)
+        self.instrument_buttons, self.label_buttons = user_widgets.init_buttons(self, self.img_panel_width, self.df_path, self.labels)
 
         # apply custom styles
         try:
@@ -279,6 +293,7 @@ class LabelerWindow(QWidget):
                 
                 message = 'Jump to image {}'.format(str(frame_number_int) + '.jpg')
                 self.error_message.setText(message)
+                self.draw_polyp_message.setText('Press button to draw polyp:')
             else:
                 message = 'Frame number {} does not exist'.format(frame_number)
                 self.error_message.setText(message)
@@ -286,6 +301,9 @@ class LabelerWindow(QWidget):
         except ValueError:
             message = 'Must be an integer. Ex: 27134'
             self.error_message.setText(message)
+
+    def on_return_pressed(self):
+        print('You have written a comment')
     
 
     def show_next_image(self):
@@ -296,7 +314,7 @@ class LabelerWindow(QWidget):
         """
         
         ##### Reinitialize texts and variables of draw polyp
-        self.draw_polyp_message.setText('')
+        self.draw_polyp_message.setText('Press button to draw polyp:')
         self.paint_activation = 0
 
         # and toJump function
@@ -328,7 +346,7 @@ class LabelerWindow(QWidget):
         """
 
         # Reinitialize texts and variables of draw polyp
-        self.draw_polyp_message.setText('')
+        self.draw_polyp_message.setText('Press button to draw polyp:')
         self.paint_activation = 0
 
         # and toJump function
@@ -489,7 +507,7 @@ class LabelerWindow(QWidget):
         """
         Changes the color of the button which corresponds to selected label
         """
-
+        
         for button in self.label_buttons:
             if button.text() in self.annotations['gs_annotations'].keys():
                 if self.annotations['gs_annotations'][button.text()] == 1:
@@ -498,6 +516,14 @@ class LabelerWindow(QWidget):
                     button.setStyleSheet('border: 3px solid #FF0000; background-color: #FF0000; color: white')
             else:
                 button.setStyleSheet('background-color: None')
+
+        # Now for the resections part
+        for button in self.instrument_buttons:
+            if 'resections' in self.annotations['gs_annotations'].keys():
+                if button.text() in self.annotations['gs_annotations']['resections']:
+                    button.setStyleSheet('border: 3px solid #43A047; background-color: #4CAF50; color: white')
+                else:
+                    button.setStyleSheet('background-color: None')
 
 
     def reset_box(self):
