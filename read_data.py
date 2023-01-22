@@ -134,7 +134,15 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
     # Resection instrument labels
     instruments = ast.literal_eval('[' + user_widgets.read_config('instruments').split('[')[1])
 
-    print(df.loc[df['frame'] == str(frame_number)]['resection'])
+    # Check that the length of the resection annotation is 1
+    frame_resection_annotations = df.loc[df['frame'] == str(frame_number)]['resections'].tolist()
+    
+    if len(frame_resection_annotations) > 1:
+        raise ValueError('Multiple resection annotations in frame: {}'.format(frame_number))
+    elif len(frame_resection_annotations) == 0:
+        annotations_output['resections'] = None
+    else:
+        annotations_output['resections'] = frame_resection_annotations[0]
 
     
     return annotations_output

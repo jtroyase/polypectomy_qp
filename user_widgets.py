@@ -204,7 +204,7 @@ def init_buttons(window, panel_width, df_path, labels):
      for i, instrument in enumerate(instruments):
           instrument_buttons.append(QtWidgets.QPushButton(instrument, window))
           inst = instrument_buttons[i]
-          inst.clicked.connect(lambda state, x=instrument: window.set_label(x))
+          inst.clicked.connect(lambda state, x=instrument, y=inst: window.set_label(x, y))
           window.formLayout_resection.addRow(inst)
 
 
@@ -221,7 +221,7 @@ def init_buttons(window, panel_width, df_path, labels):
      for i, label in enumerate(labels_without_polyp):
           label_buttons.append(QtWidgets.QPushButton(label, window))
           button = label_buttons[i]
-          button.clicked.connect(lambda state, x=label: window.set_label(x))
+          button.clicked.connect(lambda state, x=label, y=button: window.set_label(x, button))
           window.formLayout_labels.addRow(button)
 
      return instrument_buttons, label_buttons
@@ -300,11 +300,11 @@ def your_annotations_plot(window, labels, img_panel_width):
      # Reverse y axis
      plot.getPlotItem().invertY(True)
      
-     x_axis = plot.getAxis('bottom')
-     x_axis.setLabel('Labels')
-     font = QFont()
-     font.setPointSize(7)
-     x_axis.setStyle(tickFont=font)
+     # x_axis = plot.getAxis('bottom')
+     # x_axis.setLabel('Labels')
+     # font = QFont()
+     # font.setPointSize(7)
+     # x_axis.setStyle(tickFont=font)
 
      y_axis = plot.getAxis('left')
      font = QFont()

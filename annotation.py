@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
+import ast
 
 import PyQt5
 from PyQt5 import QtWidgets
@@ -335,6 +336,7 @@ class LabelerWindow(QWidget):
             self.annotations = read_data.read_annotations(frame_number, self.labels, self.df,
                                                       self.cropping_coordinates, self.factor, (self.position_image_x, self.position_image_y)
                                                       )
+
             # Set the image
             self.set_image(path, self.annotations) 
     
@@ -413,6 +415,9 @@ class LabelerWindow(QWidget):
             self.df.at[df_index, 'polyp_gs'] = None
             #print('Stored None in polyp_gs in index {}'.format(df_index))
 
+        #### STORE RESECTION DATA
+        self.df.at[df_index, 'resections'] = self.annotations['resections']
+        self.df.to_csv('testing.csv')
 
 
     def set_image(self, path, annotations):
@@ -483,23 +488,40 @@ class LabelerWindow(QWidget):
             self.formLayout_ai.addRow(label)
 
             
-    def set_label(self, label):
+    def set_label(self, label, button_object):
         """
-        Sets the label for just loaded image
+        When button of the labels (Resection and Labels) are pressed,
+        it stores the value in self.annotations in the following way:
+        - Resection: string of the button.text
+        - Labels:
+            > 0: Means that there is no annotation of the label
+            > 1: Start of the label (first appearance of the label)
+            > 2: End of the label (last appearance of the label)
+            The function iterates according to the previous. From 0 to 1 to 2.
+        
         :param label: selected label
         """
-
-        # Has the image the label?
-        if label in self.annotations['gs_annotations'].keys():
-            # Then it can be two things, green to red or red to none
-            if self.annotations['gs_annotations'][label] == 1:
-                self.annotations['gs_annotations'][label] = 2
-            else:
-                del self.annotations['gs_annotations'][label]
-        else:
-            # Add the label
-            self.annotations['gs_annotations'][label] = 1
         
+        # Has the user pressed any button of the resection?
+        if button_object in self.instrument_buttons:
+            if label == self.annotations['resections']:
+                # Then it means that the user wants to unselect it
+                self.annotations['resections'] = None
+            else:
+                self.annotations['resections'] = label
+
+        # Has the user pressed any button of the labels?
+        if button_object in self.label_buttons:
+            if label in self.annotations['gs_annotations'].keys():
+                # Then it can be two things, green to red or red to none
+                if self.annotations['gs_annotations'][label] == 1:
+                    self.annotations['gs_annotations'][label] = 2
+                else:
+                    del self.annotations['gs_annotations'][label]
+            else:
+                # Add the label
+                self.annotations['gs_annotations'][label] = 1
+            
         self.set_button_color()
 
 
@@ -519,11 +541,10 @@ class LabelerWindow(QWidget):
 
         # Now for the resections part
         for button in self.instrument_buttons:
-            if 'resections' in self.annotations['gs_annotations'].keys():
-                if button.text() in self.annotations['gs_annotations']['resections']:
-                    button.setStyleSheet('border: 3px solid #43A047; background-color: #4CAF50; color: white')
-                else:
-                    button.setStyleSheet('background-color: None')
+            if self.annotations['resections'] == button.text():
+                button.setStyleSheet('border: 3px solid #43A047; background-color: #4CAF50; color: white')
+            else:
+                button.setStyleSheet('background-color: None')
 
 
     def reset_box(self):
