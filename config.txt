@@ -7,7 +7,7 @@ extra_labels = ["wound", "outside", "ileum"]
 instruments = ["cold snare", "hot snare", "grasper", "end resection"]
 
 # Colors for the labels
-label_colors = {'polyp':'green', 'needle':'red', 'grasper':'blue', 'snare':'magenta', 'clip':'cyan', 'wound':'yellow', 'outside':'gray', 'ileum':'black'}
+label_colors = {'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'blue', 'clip':'cyan', 'wound':'yellow', 'outside':'gray', 'ileum':'black', 'cold snare':'blue', 'hot snare':'red', 'end resection':'green'}
 
 # Maximum number of polyps possible to annotate (currently not configurable)
 # max_polyp=8

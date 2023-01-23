@@ -67,8 +67,8 @@ def get_database(folder, labels):
             df[label+'_gs']= None
 
     # If the database does not have column for resection, create it
-    if 'resection' not in df.columns.to_list():
-        df['resection']=None
+    if 'resections' not in df.columns.to_list():
+        df['resections']=None
 
     # Read the metadata
     json_files = []

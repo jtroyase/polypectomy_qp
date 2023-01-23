@@ -44,6 +44,7 @@ class LabelerWindow(QWidget):
         # state variables
         self.df = df
         self.labels = labels
+        self.instruments = ast.literal_eval('[' + user_widgets.read_config('instruments').split('[')[1])
         self.counter = 0
         self.input_folder = input_folder
         self.video_name = os.path.split(input_folder)[1] + '.mkv'
@@ -51,7 +52,7 @@ class LabelerWindow(QWidget):
         self.img_root = os.path.split(self.img_paths[0])[0]
         self.num_images = len(self.img_paths)
         self.frame_to_jump = int(os.path.split(self.img_paths[0])[-1][:-4])
-        self.start = 0
+        self.update_annotations = 1 # When there is a new annotation is set to 1. Otherwise 0. Used to accelerate the program.
 
         # labels to identify different polyps
         self.paint_activation = 0
@@ -137,7 +138,7 @@ class LabelerWindow(QWidget):
         self.begin, self.destination = QPoint(), QPoint()
 
         # Create plot
-        self.plot, self.plot_items = user_widgets.your_annotations_plot(self, self.labels, self.img_panel_width)
+        self.plot, self.plot_items = user_widgets.your_annotations_plot(self, self.instruments, self.labels, self.img_panel_width)
 
         # set a plot and the data for the AI
         self.ai_plot()
@@ -152,22 +153,34 @@ class LabelerWindow(QWidget):
         self.init_ui()
 
     def ai_plot(self):
-        
+        '''
+        This creates the AI plot in the initialization
+        '''
         for label in self.labels:
-        
             # Obtain frame numbers when the label is 1
             positive = self.df[self.df[label]==1]['frame'].values
             
             if len(positive)>0:
                 x_array = [0 for _ in range(len(positive))]
                 y_array = [int(x) for x in positive]
-                pen=pg.mkPen(color=self.plot_items[label]['color'], width=2)
+                pen=pg.mkPen(color=self.plot_items[label]['color'], width=1)
                 self.plot_items[label]['scatter'].setData(x=x_array, y=y_array, pen=pen)
 
 
     def update_plot(self):
         
-        for x_position, label in enumerate(self.labels):
+        # The x position for plotting data of resection is 1
+        for instrument in self.instruments:
+            frame_label = self.df[self.df['resections'] == instrument]['frame'].values
+            
+            if len(frame_label)>0:
+                x_array = [1 for _ in range(len(frame_label))]
+                y_array = [int(x) for x in frame_label]
+                pen=pg.mkPen(self.plot_items[instrument]['color'], width=1)
+                self.plot_items[instrument]['scatter'].setData(x=x_array, y=y_array, pen=pen)
+        
+        # The x position for plotting data of AI prediction is 2
+        for label in self.labels:
             if label != 'polyp':
                 if label + '_gs' in self.df.columns:
                     
@@ -179,16 +192,16 @@ class LabelerWindow(QWidget):
                     
                     # We plot the starts
                     if len(starts)>0:
-                        x_array = [x_position + 1 for _ in range(len(starts))]
+                        x_array = [2 for _ in range(len(starts))]
                         y_array = [int(x) for x in starts]
-                        pen=pg.mkPen(color=(0,200,0), width=3)
+                        pen=pg.mkPen(color=(0,200,0), width=1)
                         self.plot_items[label + '_start'].setData(x=x_array, y=y_array, pen=pen)
       
                     # We plot the ends
                     if len(stops)>0:
-                        x_array = [x_position + 1 for _ in range(len(stops))]
+                        x_array = [2 for _ in range(len(stops))]
                         y_array = [int(x) for x in stops]
-                        pen=pg.mkPen(color='r', width=2)
+                        pen=pg.mkPen(color='r', width=1)
                         self.plot_items[label + '_stop'].setData(x=x_array, y=y_array, pen=pen)
 
             else:
@@ -198,10 +211,11 @@ class LabelerWindow(QWidget):
                     frames_without_none = df_without_none['frame'].values
 
                     if len(frames_without_none)>0:
-                        x_array = [x_position + 1 for _ in range(len(frames_without_none))]
+                        x_array = [2 for _ in range(len(frames_without_none))]
                         y_array = [int(x) for x in frames_without_none]
-                        pen=pg.mkPen(color='g', width=2)
-                        self.plot_items[label + '_gs'].setData(x=x_array, y=y_array, pen=pen)                        
+                        pen=pg.mkPen(color='g', width=1)
+                        self.plot_items[label + '_gs'].setData(x=x_array, y=y_array, pen=pen)
+                            
 
     def init_ui(self):
 
@@ -256,6 +270,9 @@ class LabelerWindow(QWidget):
         # Show a label
         self.draw_polyp_message.setText('Select polyp ID')
 
+        # Annotations will need to be updated
+        self.update_annotations = 1
+
 
     def toJump(self):
 
@@ -279,8 +296,9 @@ class LabelerWindow(QWidget):
                 self.draw_polyp_message.setText('')
                 self.paint_activation = 0
 
-                # Store the current coordinates
-                self.store_annotations()
+                # Store the current coordinates if there has been any update
+                if self.update_annotations == 1:
+                    self.store_annotations()
 
                 # Read the AI predictions and if there are previous annotated GS labels
                 self.annotations = read_data.read_annotations(str(frame_number_int), self.labels, self.df,
@@ -304,7 +322,28 @@ class LabelerWindow(QWidget):
             self.error_message.setText(message)
 
     def on_return_pressed(self):
-        print('You have written a comment')
+        '''
+        This function is called when the Return button
+        in the user comment section is pressed.
+        We need to store the data that the user inputs.
+        '''
+        
+        # Obtain the index of dataframe
+        frame_number_base7 = os.path.split(self.img_paths[self.counter])[-1].split('.')[0]
+        if frame_number_base7=='0000000':
+            frame_number = '0'
+        else:
+            frame_number = frame_number_base7.lstrip('0')
+
+        # index of the frame number of the database
+        df_index = self.df[self.df['frame'] == frame_number].index[0]
+        
+        # Store data
+        user_comment_data = self.insert_comment.text()
+        self.df.at[df_index, 'comment'] = user_comment_data
+        
+        # Cleat the QLineEdit entry line
+        self.insert_comment.clear()
     
 
     def show_next_image(self):
@@ -321,8 +360,9 @@ class LabelerWindow(QWidget):
         # and toJump function
         self.error_message.setText('')
         
-        ##### Store the annotations / coordinates on the image (not the next image)
-        self.store_annotations()
+        ##### Store the annotations / coordinates on the image (not the next image) if there has been an update
+        if self.update_annotations == 1:
+            self.store_annotations()
 
         ##### LOAD THE NEW IMAGE WITH THE PREVIOUS ANNOTATIONS
         if self.counter < self.num_images -1:
@@ -354,8 +394,9 @@ class LabelerWindow(QWidget):
         # and toJump function
         self.error_message.setText('')
         
-        # Store the annotations / coordinates on the image (of the actual image)
-        self.store_annotations()
+        # Store the annotations / coordinates on the image (of the actual image) if there has been an update
+        if self.update_annotations == 1:
+            self.store_annotations()
         
         # Check if it is the first image
         if self.counter > 0:
@@ -417,7 +458,6 @@ class LabelerWindow(QWidget):
 
         #### STORE RESECTION DATA
         self.df.at[df_index, 'resections'] = self.annotations['resections']
-        self.df.to_csv('testing.csv')
 
 
     def set_image(self, path, annotations):
@@ -466,7 +506,10 @@ class LabelerWindow(QWidget):
         self.set_button_color()
 
         # Update annotation plot only if there have been annotations
-        self.update_plot()
+        if self.update_annotations == 1:
+            self.update_plot()
+
+        self.update_annotations = 0
         
         self.update()
     
@@ -523,6 +566,7 @@ class LabelerWindow(QWidget):
                 self.annotations['gs_annotations'][label] = 1
             
         self.set_button_color()
+        self.update_annotations = 1
 
 
     def set_button_color(self):
@@ -581,6 +625,9 @@ class LabelerWindow(QWidget):
         
         # Draw the image
         painter.drawPixmap(QPoint(self.position_image_x, self.position_image_y), self.pix)
+
+        # DRAW THE LEGEND
+        user_widgets.draw_legend(painter, self.img_panel_width, self.instruments, self.labels)
 
         # To draw the coordinates of mouse events
         if self.paint_activation == 1 and self.polyp_id != 0:

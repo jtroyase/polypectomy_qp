@@ -1,7 +1,7 @@
 import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
-from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont, QColor
+from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen, QFont, QColor, QBrush
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
      QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup, QGridLayout, \
      QHBoxLayout
@@ -124,7 +124,26 @@ def label_color(label):
      colors_id = '{' + read_config('label_colors').split('{')[1]
      colors = ast.literal_eval(colors_id)
 
-     return colors[label]
+     if colors[label] == 'green':
+          pyqt_color = Qt.green
+     elif colors[label] == 'red':
+          pyqt_color = Qt.red
+     elif colors[label] == 'blue':
+          pyqt_color = Qt.blue
+     elif colors[label] == 'magenta':
+          pyqt_color = Qt.magenta
+     elif colors[label] == 'cyan':
+          pyqt_color = Qt.cyan
+     elif colors[label] == 'yellow':
+          pyqt_color = Qt.yellow
+     elif colors[label] == 'gray':
+          pyqt_color = Qt.gray
+     elif colors[label] == 'black':
+          pyqt_color = Qt.black
+     else:
+          raise ValueError('This color is not possible')
+
+     return colors[label], pyqt_color
 
 
 def read_config(label):
@@ -153,21 +172,21 @@ def init_buttons(window, panel_width, df_path, labels):
 
      # Add "Paint polyp" button
      paint_polyp_btn = QtWidgets.QPushButton("Paint polyp", window)
-     paint_polyp_btn.move(panel_width + 75, 650)
+     paint_polyp_btn.move(panel_width + 75, 655)
      paint_polyp_btn.clicked.connect(window.draw_polyp)
 
      # Add "Reset boxes" button
      reset_btn = QtWidgets.QPushButton("Reset boxes", window)
-     reset_btn.move(panel_width + 75, 680)
+     reset_btn.move(panel_width + 75, 685)
      reset_btn.clicked.connect(window.reset_box)   
 
      # Add "Prev Image" and "Next Image" buttons    
      prev_im_btn = QtWidgets.QPushButton("Prev", window)
-     prev_im_btn.move(panel_width + 20, 735)
+     prev_im_btn.move(panel_width + 20, 740)
      prev_im_btn.clicked.connect(window.show_prev_image)
 
      next_im_btn = QtWidgets.QPushButton("Next", window)
-     next_im_btn.move(panel_width+120, 735)
+     next_im_btn.move(panel_width+120, 740)
      next_im_btn.clicked.connect(window.show_next_image)
 
      # Add "Prev Image" and "Next Image" keyboard shortcuts
@@ -255,23 +274,23 @@ def position_widgets(window, img_panel_width, img_panel_height):
      window.error_message.setStyleSheet('color: red; font-weight: bold; size')
 
      # Label "Your Annotations"
-     window.your_annotations.setGeometry(img_panel_width + 50, 235, 150, 10)
+     window.your_annotations.setGeometry(img_panel_width + 50, 235, 150, 15)
      window.your_annotations.setObjectName('headline')
 
      # Draw polyp message "Press button to draw polyp"
-     window.draw_polyp_message.setGeometry(img_panel_width + 5, 630, 200, 15)
+     window.draw_polyp_message.setGeometry(img_panel_width + 5, 635, 200, 15)
      window.draw_polyp_message.setObjectName('headline')
 
      # Label of "Change image"
-     window.change_image.setGeometry(img_panel_width + 5, 710, 220, 20)
+     window.change_image.setGeometry(img_panel_width + 5, 715, 220, 20)
      window.change_image.setObjectName('headline')
 
-     # Label "Comment:":
-     window.comment_label.setGeometry(img_panel_width + 5, 770, 150, 10)
+     # Label "Comments:":
+     window.comment_label.setGeometry(img_panel_width + 5, 775, 150, 15)
      window.comment_label.setObjectName('headline')
 
      # Editline "insert_comment":
-     window.insert_comment.setGeometry(img_panel_width + 5, 785, 220, 25)
+     window.insert_comment.setGeometry(img_panel_width + 5, 795, 220, 25)
 
      # message that csv was generated
      window.csv_generated_message.setGeometry(img_panel_width + 30, 1000, 1200, 20)
@@ -279,8 +298,8 @@ def position_widgets(window, img_panel_width, img_panel_height):
 
      # Initiate the ScrollAreas AI and position them
      window.scroll_ai.setGeometry(img_panel_width + 5, 125, 220, 105)
-     window.scroll_resection.setGeometry(img_panel_width + 5 , 250, 220, 155)
-     window.scroll_labels.setGeometry(img_panel_width + 5, 410, 220, 212)
+     window.scroll_resection.setGeometry(img_panel_width + 5 , 255, 220, 155)
+     window.scroll_labels.setGeometry(img_panel_width + 5, 415, 220, 212)
 
      # draw line for better UX
      ui_line = QLabel(window)
@@ -288,19 +307,21 @@ def position_widgets(window, img_panel_width, img_panel_height):
      ui_line.setStyleSheet('background-color: black')
 
 
-def your_annotations_plot(window, labels, img_panel_width):
+def your_annotations_plot(window, instruments, labels, img_panel_width):
 
      plot = pg.PlotWidget(window)
      plot.setTitle("Your annotations", color="black", size="15pt")
-     plot.setGeometry(img_panel_width + 227, 0, 265, 1050)
+     plot.setGeometry(img_panel_width + 235, 0, 265, 1050)
      plot.setBackground((240,240,240,255)) # Set color to same background
      #self.plot.hideAxis('bottom')
      #self.plot.hideAxis('left')
-     plot.setXRange(0, len(labels))
+     # We set the name of the x_ticks in x axis
+     x_ticks = [[(0, 'AI'), (1, 'Resection'), (2, 'Labels')]]
+     plot.setXRange(0, len(x_ticks[0])-1)
      # Reverse y axis
      plot.getPlotItem().invertY(True)
      
-     # x_axis = plot.getAxis('bottom')
+     x_axis = plot.getAxis('bottom')
      # x_axis.setLabel('Labels')
      # font = QFont()
      # font.setPointSize(7)
@@ -312,33 +333,71 @@ def your_annotations_plot(window, labels, img_panel_width):
      y_axis.setStyle(tickFont=font)
      #y_axis.tickTextOffset = 0
 
-     # Create a ScatterPlotItem for each label except polyp
+     # Create a ScatterPlotItem for AI data, resection data and labels data
      plot_items = {}
+     
+     # Create ScatterPlotItem for resection/instrument annotation
+     for instrument in instruments:
+          plot_items[instrument] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(instrument)[0]}
+          plot.addItem(plot_items[instrument]['scatter'])
 
-     x_ticks = [[(0, 'AI')]]
-     for i, label in enumerate(labels):
-          x_ticks[0].append((i+1, label))
-          if label != 'polyp':
-               # Create ScatterPlotItem for goldstandard annotation
+     # Create ScatterPlotItem for label annotation and AI prediction
+     for label in labels:
+          if label != 'polyp':              
+               # For label annotation
                plot_items[label + '_start'] = pg.ScatterPlotItem()
                plot.addItem(plot_items[label + '_start'])
 
                plot_items[label + '_stop'] = pg.ScatterPlotItem()
                plot.addItem(plot_items[label + '_stop'])
 
-               # Create ScatterPlotItem for AI
-               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)}
+               # For AI prediction
+               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
                plot.addItem(plot_items[label]['scatter'])
 
           else:
-               # Create ScatterPlotItem for polyp for goldstandard annotation
+               # For polyp for goldstandard annotation
                plot_items[label + '_gs'] = pg.ScatterPlotItem()
                plot.addItem(plot_items[label + '_gs'])
 
-               # Create ScatterPlotItem for polyp AI
-               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)}
+               # For polyp AI
+               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
                plot.addItem(plot_items[label]['scatter'])
 
      x_axis.setTicks(x_ticks)
 
      return plot, plot_items
+
+
+def draw_legend(painter, img_panel_width, instruments, labels):
+     
+     
+     # Titles:
+     painter.setFont(QFont("SansSerif", 10, QFont.Bold))
+     painter.drawText(img_panel_width + 55, 838, 'PLOT LEGEND')
+     
+     painter.setFont(QFont("SansSerif", 10))
+     painter.drawText(img_panel_width + 5, 860, 'AI & Label:')
+     painter.drawText(img_panel_width + 115, 860, 'Resection:')
+     #painter.setBrush(QBrush(Qt.black, 5, Qt.SolidPattern))
+     
+     # For AI and labels
+     for i, label in enumerate(labels):
+          # Text
+          painter.drawText(img_panel_width + 20, 879 + (i*20), label)
+
+          # Box
+          painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+          painter.setBrush(QBrush(label_color(label)[1]))
+          painter.drawRect(img_panel_width + 5, 869 + (i*20), 10, 10)
+
+     # For resection labels
+     for i, instrument in enumerate(instruments):
+          # Text
+          painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+          painter.drawText(img_panel_width + 130, 879 + (i*20), instrument)
+
+          # Box
+          painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+          painter.setBrush((label_color(instrument)[1]))
+          painter.drawRect(img_panel_width + 115, 869 + (i*20), 10, 10)
