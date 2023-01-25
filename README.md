@@ -13,9 +13,9 @@ The program is based on PyQt5.
 * [Pandas](https://pandas.pydata.org/) = 1.5.2
 * [Numpy](https://numpy.org/) =1.23.5
 
-Tested on Ubuntu 18.04.6 LTS
-Processor: Intel® Core™ i7-9700K CPU @ 3.60GHz × 8
-Graphics: Quadro P620/PCIe/SSE2
+- Tested on Ubuntu 18.04.6 LTS
+- Processor: Intel® Core™ i7-9700K CPU @ 3.60GHz × 8
+- Graphics: Quadro P620/PCIe/SSE2
 
 ### Installation
 
