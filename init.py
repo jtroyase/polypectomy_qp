@@ -1,10 +1,8 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QPoint, QRect, QTimer
-from PyQt5.QtGui import QPixmap, QIntValidator, QKeySequence, QPainter, QPen
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QCheckBox, QFileDialog, QDesktopWidget, QLineEdit, \
-     QRadioButton, QShortcut, QScrollArea, QVBoxLayout, QGroupBox, QFormLayout, QSlider, QButtonGroup
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QDesktopWidget
 
-from read_data import get_database
+from read_data import get_database, get_img_paths
 from annotation import LabelerWindow
 import user_widgets
 
@@ -39,7 +37,6 @@ class SetupWindow(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        # self.selectFolderDialog = QFileDialog.getExistingDirectory(self, 'Select directory')
         self.setWindowTitle('PyQt5 - Annotation tool - Parameters setup')
         self.setGeometry(0, 0, self.width, self.height)
         self.centerOnScreen()
@@ -136,7 +133,8 @@ class SetupWindow(QWidget):
 
             # Get the database
             df, metadata = get_database(self.selected_folder, labels_to_annotate)
-            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, metadata)
+            img_paths = get_img_paths(self.selected_folder, df)
+            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, metadata, img_paths)
             annotation_window.show()
         else:
             self.error_message.setText(message)

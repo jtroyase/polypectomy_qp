@@ -66,6 +66,3 @@ def pqp2original(coordinates, cropping_coordinates, reduction_factor, image_posi
         rescaled_coordinates.append((polyp_id, (x,y,width,height)))
 
     return rescaled_coordinates
-
-
-

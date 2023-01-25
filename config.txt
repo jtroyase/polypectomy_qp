@@ -1,7 +1,7 @@
 # Setup the possible labels to annotate:
 # Use a list containing strings
-labels = ["polyp", "needle", "grasper", "snare", "clip"]
-extra_labels = ["wound", "outside", "ileum"]
+labels = ["polyp", "needle", "grasper", "snare", "clip", "wound", "ileum"]
+extra_labels = ["outside"]
 
 # Instruments to resect
 instruments = ["cold snare", "hot snare", "grasper", "end resection"]
@@ -20,4 +20,7 @@ scale_image_by_height=1000
 
 # position in the screen. Values must be between 0<x<100 and 0<y50.
 position_x =30
-position_y =20
+position_y =35
+
+# spacing of the objects in the x axis of the screen
+spacing =10
