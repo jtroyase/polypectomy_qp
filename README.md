@@ -23,7 +23,9 @@ Graphics: Quadro P620/PCIe/SSE2
 
 1. Clone the repository
 2. Open terminal in the folder of the project.
+3. (Optional) Create an environment and activate
 3. ```pip install -r requirements.txt```
+4. ```python main.py```
 
 
 ### License :
