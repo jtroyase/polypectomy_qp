@@ -1,7 +1,7 @@
 PQP Annotation Tool
 ====================
 
-Software that allows you to manually and quickly annotate images.
+Software that allows to manually and quickly annotate images.
 It is designed to specifically generate data to train an AI to recognize the quality of the polypectomy and identify polyps.
 The program is based on PyQt5.
 
