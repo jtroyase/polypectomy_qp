@@ -19,8 +19,8 @@ colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:
 scale_image_by_height=1000
 
 # position in the screen. Values must be between 0<x<100 and 0<y50.
-position_x =30
+position_x =25
 position_y =35
 
 # spacing of the objects in the x axis of the screen
-spacing =10
+spacing =2

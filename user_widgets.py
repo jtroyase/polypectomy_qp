@@ -225,14 +225,14 @@ def position_widgets(window, img_panel_width, img_panel_height, spacing):
      window.frame_number_label.setGeometry(img_panel_width + spacing + 70, 50, 45 + spacing, 20)
 
      # jump to label
-     window.jumpto.setGeometry(img_panel_width + spacing + 5, 75, 60, 20)
+     window.jumpto.setGeometry(img_panel_width + spacing + 5, 75, 62, 20)
      window.jumpto.setObjectName('headline')
 
      # jump to editline user
-     window.jumpto_user.setGeometry(img_panel_width + spacing + 70, 75, 150 + spacing, 25)
+     window.jumpto_user.setGeometry(img_panel_width + spacing + 71, 75, 150 + spacing, 25)
 
      # Error message jump
-     window.error_message.setGeometry(img_panel_width + spacing + 27, 100, 150 + spacing, 25)
+     window.error_message.setGeometry(img_panel_width + spacing + 23, 100, 181 + spacing, 25)
      window.error_message.setStyleSheet('color: red; font-weight: bold; size')
 
      # Label "Your Annotations"

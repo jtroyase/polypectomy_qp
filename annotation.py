@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import ast
+import time
 
 from PyQt5.QtCore import Qt, QPoint, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QFont, QBrush
@@ -755,17 +756,17 @@ class LabelerWindow(QWidget):
 
         # Save different versions
         path_to_save = os.path.join(self.input_folder, 'output')
-        # make_folder(path_to_save)
+        make_folder(path_to_save)
 
-        # timestr = time.strftime("%Y-%m-%d_%H-%M-%S_")
-        # csv_file_path = path_to_save + '/' + timestr + os.path.split(out_filename)[-1]
+        timestr = time.strftime("%Y-%m-%d_%H-%M-%S_")
+        csv_file_path = path_to_save + '/' + timestr + os.path.split(out_filename)[-1]
 
-        # self.df.to_csv(csv_file_path)
+        self.df.to_csv(csv_file_path)
 
-        # # Drop column frame_integers because no longer needed
-        # self.df.drop('frame_integers', axis=1, inplace=True)
-        # self.df.to_csv(self.df_path)
+        # Drop column frame_integers because no longer needed
+        self.df.drop('frame_integers', axis=1, inplace=True)
+        self.df.to_csv(self.df_path)
 
-        # message = 'csv saved'
-        # self.csv_generated_message.setText(message)
-        # print(message)
+        message = 'csv saved'
+        self.csv_generated_message.setText(message)
+        print(message)
