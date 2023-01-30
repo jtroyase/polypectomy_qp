@@ -6,6 +6,8 @@ from read_data import get_database, get_img_paths
 from annotation import LabelerWindow
 import user_widgets
 
+import ast
+
 class SetupWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -131,10 +133,12 @@ class SetupWindow(QWidget):
                 if value.isChecked() == True:
                     labels_to_annotate.append(key)
 
+            labels_to_plot = ast.literal_eval('[' + user_widgets.read_config('labels_to_plot').split('[')[1])
+
             # Get the database
             df, metadata = get_database(self.selected_folder, labels_to_annotate)
             img_paths = get_img_paths(self.selected_folder, df)
-            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, metadata, img_paths)
+            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, labels_to_plot, metadata, img_paths)
             annotation_window.show()
         else:
             self.error_message.setText(message)

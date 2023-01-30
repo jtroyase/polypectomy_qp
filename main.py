@@ -3,7 +3,6 @@ import sys
 
 from init import SetupWindow
 
-
 if __name__ == '__main__':
     #run the application
     app = QApplication(sys.argv)
@@ -13,7 +12,7 @@ if __name__ == '__main__':
 
     #SHORTCUT
     # app = QApplication(sys.argv)
-    # selected_folder = '/media/inexen/CADe_comparison_review/Polypectomy-Data/coloscopie_2018-12-20_12-16-02_BoeckRetro'
+    # selected_folder = '/media/inexen/CADe_comparison_review/Polypectomy-Data/coloscopie_2021-04-26_11-59-26_Ludwig1'
     # labels_to_annotate = ['polyp', 'needle', 'grasper', 'snare', 'clip', 'wound', 'ileum']
     # df, metadata = get_database(selected_folder, labels_to_annotate)
     # img_paths = get_img_paths(selected_folder, df)

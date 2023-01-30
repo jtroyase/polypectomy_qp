@@ -1,13 +1,17 @@
 # Setup the possible labels to annotate:
 # Use a list containing strings
-labels = ["polyp", "needle", "grasper", "snare", "clip", "wound", "ileum"]
-extra_labels = ["outside"]
+# labels_to_annotate contain default labels that you want to annotate but not display in the plot
+# labels_to_plot contain the predictions of the AI that you want to display in the plot
+# extra_labels contain labels that might be additionally chosen to be annotated
+labels_to_annotate = ["polyp", "start_withdrawal", "wound", "ileum"]
+labels_to_plot = ["polyp", "snare", "grasper", "ileum", "appendix", "ileocaecalvalve"]
+extra_labels = ["needle", "grasper", "clip", "snare", "outside"]
 
 # Instruments to resect
 instruments = ["cold snare", "hot snare", "grasper", "end resection"]
 
 # Colors for the labels
-label_colors = {'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'blue', 'clip':'cyan', 'wound':'yellow', 'outside':'gray', 'ileum':'black', 'cold snare':'blue', 'hot snare':'red', 'end resection':'green'}
+label_colors = {'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'blue', 'clip':'cyan', 'wound':'gray', 'outside':'gray', 'ileum':'black', 'cold snare':'blue', 'hot snare':'red', 'end resection':'black', 'start_withdrawal':'blue', "appendix":"black", "ileocaecalvalve":"black"}
 
 # Maximum number of polyps possible to annotate (currently not configurable)
 # max_polyp=8

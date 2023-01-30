@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import user_widgets
 import transform_coord
+import ast
 
 def get_img_paths(dir, dataframe, extensions=('.jpg', '.png', '.jpeg')):
     '''
@@ -40,7 +41,7 @@ def get_img_paths(dir, dataframe, extensions=('.jpg', '.png', '.jpeg')):
     return img_annotate_path
 
 
-def get_database(folder, labels):
+def get_database(folder, labels_to_annotate):
     '''
     :param selected_folder: Path of the folder of the data to annotate
     :param labels: labels that user has chosen to annotate
@@ -59,10 +60,10 @@ def get_database(folder, labels):
         
     # Read the database
     df_loc = os.path.join(folder, find_csv[0])
-    df = pd.read_csv(df_loc, index_col = 'Unnamed: 0')
+    df = pd.read_csv(df_loc)
 
     # If the database does not have columns for GS annotations, create them
-    for label in labels:
+    for label in labels_to_annotate:
         if label + '_gs' not in df.columns.to_list():
             df[label+'_gs']= None
 
@@ -87,7 +88,7 @@ def get_database(folder, labels):
 
     return df, metadata
 
-def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_factor, image_position):
+def read_annotations(frame_number, labels_to_annotate, labels_to_plot, df, cropping_coordinates, reduction_factor, image_position):
     '''
     :param frame_number: Number of the frame (integer) to read annotations. E.g. 1569
     :param labels: which labels should we read data from
@@ -106,36 +107,41 @@ def read_annotations(frame_number, labels, df, cropping_coordinates, reduction_f
                           'ai_predictions':{}
                           }
     
-    # This is to read the data for ai predictions and labels, NOT RESECTION
-    for lab in labels:
+    
+    # This is to read the data for labels to annotate
+    for lab in labels_to_annotate:
         # If it is for polyp, the format is different because it contains coordinates
         # with the following format [(1, (x,y,width,height)), (2, (x,y,width,height))]
         if lab == 'polyp':
             # ANNOTATIONS
             polyp_gs = df.loc[df['frame_integers'] == frame_number]['polyp_gs'].values
+
             if polyp_gs:
                 if type(polyp_gs[0])==list:
                     # Transform the coordinates to match the resolution of the pqp program
                     rescaled_coordinates = transform_coord.original2pqp(polyp_gs[0], cropping_coordinates, reduction_factor, image_position)
                     annotations_output['gs_annotations']['polyp'] = rescaled_coordinates
-
-            #PREDICTIONS
-            polyp_ai = df.loc[df['frame_integers'] == frame_number]['polyp'].values
-            if polyp_ai and polyp_ai[0] == 1:
-                annotations_output['ai_predictions']['polyp'] = polyp_ai[0]
-
+                if type(polyp_gs[0])==str:
+                    # Transform the coordinates to list
+                    coordinates = ast.literal_eval(polyp_gs[0])
+                    # Transform the coordinates to match the resolution of the pqp program
+                    rescaled_coordinates = transform_coord.original2pqp(coordinates, cropping_coordinates, reduction_factor, image_position)
+                    annotations_output['gs_annotations']['polyp'] = rescaled_coordinates
         else:
             l_gs = df.loc[df['frame_integers'] == frame_number]['{}_gs'.format(lab)].values
-            l_ai = df.loc[df['frame_integers'] == frame_number]['{}'.format(lab)].values
-            
             if l_gs:
                 if l_gs[0] == 1 or l_gs[0] == 2:
                     annotations_output['gs_annotations'][lab] = l_gs[0]
-            if l_ai:
-                if l_ai[0] == 1 or l_ai[0] == 2:
-                    annotations_output['ai_predictions'][lab] = l_ai[0]
 
-    # RESECTION
+
+    # This is to read the data for labels to plot
+    for lab in labels_to_plot: 
+        lab_plot = df.loc[df['frame_integers'] == frame_number]['{}'.format(lab)].values
+        if lab_plot and lab_plot[0] == 1:
+            annotations_output['ai_predictions'][lab] = lab_plot[0]
+
+
+    # RESECTION INSTRUMENTS
     # Check that the length of the resection annotation is 1
     frame_resection_annotations = df.loc[df['frame_integers'] == frame_number]['resections'].tolist()
     

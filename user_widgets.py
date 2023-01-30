@@ -16,17 +16,17 @@ def init_label_checkboxes(window):
      '''
 
      # Open the config file
-     labels = []
+     labels_to_annotate = []
      extra_labels = []
 
-     labels = ast.literal_eval('[' + read_config('labels').split('[')[1])
+     labels_to_annotate = ast.literal_eval('[' + read_config('labels_to_annotate').split('[')[1])
      extra_labels = ast.literal_eval('[' + read_config('extra_labels').split('[')[1])
      
      grid = QGridLayout(window)
 
      positions = []
      row = 0
-     for _ , label in enumerate(labels+extra_labels):
+     for _ , label in enumerate(labels_to_annotate + extra_labels):
           remainder = _%5
           if remainder == 4:
                positions.append((row, remainder))
@@ -35,9 +35,9 @@ def init_label_checkboxes(window):
                positions.append((row, remainder))
 
      checkboxes = {}
-     for position, label in zip(positions,labels + extra_labels):
+     for position, label in zip(positions,labels_to_annotate + extra_labels):
           checkbox = QCheckBox(label, window)
-          if label in labels:
+          if label in labels_to_annotate:
                checkbox.setChecked(True)
           checkboxes[label]=checkbox
           grid.addWidget(checkbox, *position)
@@ -134,25 +134,25 @@ def init_buttons(window, panel_width, df_path, labels, spacing):
 
      # Add "Paint polyp" button
      paint_polyp_btn = QPushButton("Paint polyp", window)
-     paint_polyp_btn.move(panel_width +  spacing + 75, 655)
+     paint_polyp_btn.move(panel_width +  spacing + 75, 590)
      paint_polyp_btn.clicked.connect(window.draw_polyp)
 
      # Add "Reset boxes" button
      reset_btn = QPushButton("Reset boxes", window)
-     reset_btn.move(panel_width +  spacing + 75, 685)
+     reset_btn.move(panel_width +  spacing + 72, 620)
      reset_btn.clicked.connect(window.reset_box)   
 
      # Add "Prev Image" and "Next Image" buttons    
      prev_im_btn = QPushButton("Prev", window)
-     prev_im_btn.move(panel_width +  spacing + 20, 740)
+     prev_im_btn.move(panel_width +  spacing + 20, 675)
      prev_im_btn.clicked.connect(window.show_prev_image)
 
      next_im_btn = QPushButton("Next", window)
-     next_im_btn.move(panel_width +  spacing + 120, 740)
+     next_im_btn.move(panel_width +  spacing + 120, 675)
      next_im_btn.clicked.connect(window.show_next_image)
 
      # Add "Prev Image" and "Next Image" keyboard shortcuts
-     prev_im_kbs = QShortcut(QKeySequence("p"), window)
+     prev_im_kbs = QShortcut(QKeySequence("b"), window)
      prev_im_kbs.activated.connect(window.show_prev_image)
 
      next_im_kbs = QShortcut(QKeySequence("n"), window)
@@ -189,7 +189,7 @@ def init_buttons(window, panel_width, df_path, labels, spacing):
           window.formLayout_resection.addRow(inst)
 
 
-     # create button for each label except for polyp
+     # create button for each label except for polyp because is annotated differently
      if 'polyp' in labels:
           labels_without_polyp = []
           for l in labels:
@@ -232,45 +232,118 @@ def position_widgets(window, img_panel_width, img_panel_height, spacing):
      window.jumpto_user.setGeometry(img_panel_width + spacing + 71, 75, 150 + spacing, 25)
 
      # Error message jump
-     window.error_message.setGeometry(img_panel_width + spacing + 23, 100, 181 + spacing, 25)
+     window.error_message.setGeometry(img_panel_width + spacing + 23, 100, 191 + spacing, 25)
      window.error_message.setStyleSheet('color: red; font-weight: bold; size')
 
      # Label "Your Annotations"
-     window.your_annotations.setGeometry(img_panel_width + 2*spacing + 50, 235, 150, 15)
+     window.your_annotations.setGeometry(img_panel_width + 2*spacing + 50, 225, 150, 15)
      window.your_annotations.setObjectName('headline')
 
      # Draw polyp message "Press button to draw polyp"
-     window.draw_polyp_message.setGeometry(img_panel_width + spacing + 5, 635, 200 + spacing, 15)
+     window.draw_polyp_message.setGeometry(img_panel_width + spacing + 5, 565, 200 + spacing, 15)
      window.draw_polyp_message.setObjectName('headline')
 
      # Label of "Change image"
-     window.change_image.setGeometry(img_panel_width + spacing + 5, 715, 220 + spacing, 20)
+     window.change_image.setGeometry(img_panel_width + spacing + 5, 650, 220 + spacing, 20)
      window.change_image.setObjectName('headline')
 
      # Label "Comments:":
-     window.comment_label.setGeometry(img_panel_width +  spacing + 5, 775, 150 + spacing, 15)
+     window.comment_label.setGeometry(img_panel_width +  spacing + 5, 710, 150 + spacing, 15)
      window.comment_label.setObjectName('headline')
 
      # Editline "insert_comment":
-     window.insert_comment.setGeometry(img_panel_width +  spacing + 5, 795, 220 + spacing, 25)
+     window.insert_comment.setGeometry(img_panel_width +  spacing + 5, 730, 220 + spacing, 25)
 
      # message that csv was generated
      window.csv_generated_message.setGeometry(img_panel_width +  spacing + 5, 1032, 1200 + spacing, 20)
      window.csv_generated_message.setStyleSheet('color: #43A047')
 
      # Initiate the ScrollAreas AI and position them
-     window.scroll_ai.setGeometry(img_panel_width +  spacing + 5, 125, 220 + spacing, 105)
-     window.scroll_resection.setGeometry(img_panel_width +  spacing + 5 , 255, 220 + spacing, 155)
-     window.scroll_labels.setGeometry(img_panel_width +  spacing + 5, 415, 220 + spacing, 212)
+     window.scroll_ai.setGeometry(img_panel_width +  spacing + 5, 125, 220 + spacing, 95)
+     window.scroll_resection.setGeometry(img_panel_width +  spacing + 5 , 245, 220 + spacing, 165)
+     window.scroll_labels.setGeometry(img_panel_width +  spacing + 5, 415, 220 + spacing, 135)
 
      # draw line for better UX
      ui_line = QLabel(window)
      ui_line.setGeometry(img_panel_width +  3*spacing + 230, 0, 1, img_panel_height)
      ui_line.setStyleSheet('background-color: black')
 
+def draw_legend(painter, img_panel_width, instruments, labels_to_annotate, labels_to_plot, spacing):
+     
+     # Titles:
+     painter.setFont(QFont("SansSerif", 10, QFont.Bold))
+     painter.drawText(img_panel_width +  spacing + 58, 785, 'PLOT LEGEND')
+     
+     painter.setFont(QFont("SansSerif", 10))
+     painter.drawText(img_panel_width +  spacing + 5, 805, 'AI:')
+     painter.drawText(img_panel_width +  spacing + 115, 805, 'Resection:')
+     painter.drawText(img_panel_width +  spacing + 77, 920, 'Labels')
+     #painter.setBrush(QBrush(Qt.black, 5, Qt.SolidPattern))
+     
+     # For AI
+     resection = ["snare", "grasper", "polyp"]
 
-def your_annotations_plot(window, instruments, labels, img_panel_width, spacing):
+     for i, label in enumerate(labels_to_plot):
+          # Do not show more than 7 labels
+          if i==7:
+               break
+          
+          # Show only resection labels
+          if label in resection:
+               # Text
+               painter.drawText(img_panel_width +  spacing + 20, 825 + (i*20), label)
+               # Box
+               painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+               painter.setBrush(QBrush(label_color(label)[1]))
+               painter.drawRect(img_panel_width +  spacing + 5, 815 + (i*20), 10, 10)
+     
 
+     # Show only coecum for localisation labels one time
+     # Text
+     painter.drawText(img_panel_width +  spacing + 20, 825 + (len(resection) *20), 'coecum')
+     # Box
+     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+     painter.setBrush(QBrush(Qt.black))
+     painter.drawRect(img_panel_width +  spacing + 5, 815 + (len(resection)*20), 10, 10)
+
+     # For resection labels
+     for i, instrument in enumerate(instruments):
+          # Text
+          painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+          painter.drawText(img_panel_width +  2*spacing + 130, 825 + (i*20), instrument)
+
+          # Box
+          painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+          painter.setBrush((label_color(instrument)[1]))
+          painter.drawRect(img_panel_width +  2*spacing + 115, 815 + (i*20), 10, 10)
+
+     #For labels to annotate
+     for i, label in enumerate(labels_to_annotate):
+          label_name = label if label != 'start_withdrawal' else 'withdrawal'
+          
+          if i < 2:
+               # Text
+               painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+               painter.drawText(img_panel_width +  spacing + 20, 945 + (i*20), label_name)
+
+               # Box
+               painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+               painter.setBrush((label_color(label)[1]))
+               painter.drawRect(img_panel_width +  spacing + 5, 935 + (i*20), 10, 10)
+          else:
+               # Text
+               painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
+               painter.drawText(img_panel_width +  2*spacing + 130, 945 + ((i-2)*20), label_name)
+
+               # Box
+               painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+               painter.setBrush((label_color(label)[1]))
+               painter.drawRect(img_panel_width +  2*spacing + 115, 935 + ((i-2)*20), 10, 10)
+
+
+
+
+def your_annotations_plot(window, instruments, labels_to_annotate, labels_to_plot, img_panel_width, spacing):
      plot = pg.PlotWidget(window)
      plot.setTitle("Your annotations", color="black", size="15pt", position='bottom')
      plot.setGeometry(img_panel_width + 3*spacing + 235, 10, 265, 1040)
@@ -278,7 +351,7 @@ def your_annotations_plot(window, instruments, labels, img_panel_width, spacing)
      #self.plot.hideAxis('bottom')
      #self.plot.hideAxis('left')
      # We set the name of the x_ticks in x axis
-     x_ticks = [[(0, 'AI'), (1, 'Resection'), (2, 'Labels')]]
+     x_ticks = [[(0, 'AI resection'), (1, 'AI location'), (2, 'Resection'), (3, 'Labels')]]
      plot.setXRange(0, len(x_ticks[0])-1)
      
      # Reverse y axis
@@ -292,96 +365,63 @@ def your_annotations_plot(window, instruments, labels, img_panel_width, spacing)
 
      y_axis = plot.getAxis('left')
      font = QFont()
-     font.setPointSize(6)
+     font.setPointSize(8)
      y_axis.setStyle(tickFont=font)
-     #y_axis.tickTextOffset = 0
 
-     # Create a ScatterPlotItem for AI data, resection data and labels data
-     plot_items = {}
+     # Create a ScatterPlotItem for AI resection, AI location, Resection and Labels
+     plot_items = {'AI':{},
+                   'resection':{},
+                   'label':{}
+                   }
      
-     # Create ScatterPlotItem for resection/instrument annotation
+     # For AI resection and AI location
+     for label in labels_to_plot:
+          plot_items['AI'][label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
+          plot.addItem(plot_items['AI'][label]['scatter'])
+     
+     # For resection/instrument annotation
      for instrument in instruments:
-          plot_items[instrument] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(instrument)[0]}
-          plot.addItem(plot_items[instrument]['scatter'])
+          plot_items['resection'][instrument] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(instrument)[0]}
+          plot.addItem(plot_items['resection'][instrument]['scatter'])
 
-     # Create ScatterPlotItem for label annotation and AI prediction
-     for label in labels:
-          if label != 'polyp':              
-               # For label annotation
-               plot_items[label + '_start'] = pg.ScatterPlotItem()
-               plot.addItem(plot_items[label + '_start'])
-
-               plot_items[label + '_stop'] = pg.ScatterPlotItem()
-               plot.addItem(plot_items[label + '_stop'])
-
-               # For AI prediction
-               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
-               plot.addItem(plot_items[label]['scatter'])
-
-          else:
-               # For polyp for goldstandard annotation
-               plot_items[label + '_gs'] = pg.ScatterPlotItem()
-               plot.addItem(plot_items[label + '_gs'])
-
-               # For polyp AI
-               plot_items[label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
-               plot.addItem(plot_items[label]['scatter'])
+     # For label annotations
+     for label in labels_to_annotate:
+          plot_items['label'][label] = {'scatter':pg.ScatterPlotItem(), 'color': label_color(label)[0]}
+          plot.addItem(plot_items['label'][label]['scatter'])
 
      x_axis.setTicks(x_ticks)
 
      return plot, plot_items
 
 
-def draw_legend(painter, img_panel_width, instruments, labels, spacing):
-     
-     # Titles:
-     painter.setFont(QFont("SansSerif", 10, QFont.Bold))
-     painter.drawText(img_panel_width +  spacing + 55, 838, 'PLOT LEGEND')
-     
-     painter.setFont(QFont("SansSerif", 10))
-     painter.drawText(img_panel_width +  spacing + 5, 860, 'AI & Label:')
-     painter.drawText(img_panel_width +  spacing + 115, 860, 'Resection:')
-     #painter.setBrush(QBrush(Qt.black, 5, Qt.SolidPattern))
-     
-     # For AI and labels
-     for i, label in enumerate(labels):
-          # Do not show more than 7 labels
-          if i==7:
-               break
-          
-          # Text
-          painter.drawText(img_panel_width +  spacing + 20, 879 + (i*20), label)
-
-          # Box
-          painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-          painter.setBrush(QBrush(label_color(label)[1]))
-          painter.drawRect(img_panel_width +  spacing + 5, 869 + (i*20), 10, 10)
-
-     # For resection labels
-     for i, instrument in enumerate(instruments):
-          # Text
-          painter.setBrush(QBrush(Qt.black, Qt.SolidPattern))
-          painter.drawText(img_panel_width +  2*spacing + 130, 879 + (i*20), instrument)
-
-          # Box
-          painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-          painter.setBrush((label_color(instrument)[1]))
-          painter.drawRect(img_panel_width +  2*spacing + 115, 869 + (i*20), 10, 10)
-
-
-def ai_plot(labels, df, plot_items):
+def ai_plot(df, plot_items):
      '''
      This creates the AI plot in the initialization
+     It is distributed in two:
+          - AI resection: snare, grasper, polyp
+          - AI localisation: ileum, appendix, ileocaecalvalve
      '''
-     
-     for label in labels:
-          # Obtain frame numbers when the label is 1
-          positive = df.query(f'{label} == 1')['frame_integers'].values
-          
-          if len(positive)>0:
-               x_array = np.repeat(0, len(positive))
-               y_array = np.array(positive, dtype=int)
-               pen=pg.mkPen(color=plot_items[label]['color'], width=0.5)
-               brush=pg.mkBrush(plot_items[label]['color'])
-               plot_items[label]['scatter'].setData(x=x_array, y=y_array, size=5, brush=brush, pen=pen)
-               plot_items[label]['scatter'].update()
+
+     resection = ["snare", "grasper", "polyp"]
+     localisation = ["ileum", "appendix", "ileocaecalvalve"]
+
+     for label in plot_items['AI']:
+          if label in resection:
+               positive = df.query(f'{label} == 1')['frame_integers'].values
+               if len(positive)>0:
+                    x_array = np.repeat(0, len(positive))
+                    y_array = np.array(positive, dtype=int)
+                    pen=pg.mkPen(color=plot_items['AI'][label]['color'], width=0.5)
+                    brush=pg.mkBrush(plot_items['AI'][label]['color'])
+                    plot_items['AI'][label]['scatter'].setData(x=x_array, y=y_array, size=5, brush=brush, pen=pen)
+                    plot_items['AI'][label]['scatter'].update()
+
+          if label in localisation:
+               positive = df.query(f'{label} == 1')['frame_integers'].values
+               if len(positive)>0:
+                    x_array = np.repeat(1, len(positive))
+                    y_array = np.array(positive, dtype=int)
+                    pen=pg.mkPen(color=plot_items['AI'][label]['color'], width=0.5)
+                    brush=pg.mkBrush(plot_items['AI'][label]['color'])
+                    plot_items['AI'][label]['scatter'].setData(x=x_array, y=y_array, size=5, brush=brush, pen=pen)
+                    plot_items['AI'][label]['scatter'].update()
