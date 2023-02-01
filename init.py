@@ -86,7 +86,8 @@ class SetupWindow(QWidget):
         """
         shows a dialog to choose folder with images to label
         """
-        dialog = QFileDialog()
+        dialog = QFileDialog(self)
+        dialog.setWindowModality(Qt.WindowModal)
         folder_path = dialog.getExistingDirectory(None, "Select Folder", "/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/")
 
         self.selected_folder_label.setText(folder_path)

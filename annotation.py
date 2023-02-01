@@ -63,15 +63,25 @@ class LabelerWindow(QWidget):
         self.df_path = os.path.join(input_folder, self.video_name[:-4] + '.csv')
 
         # Get scale factor and position of the image
-        image_attributes = read_data.image_attributes((self.width_without_scale, self.height_without_scale))
+        image_attributes = read_data.image_attributes((self.width_without_scale, self.height_without_scale), self.video_name)
         self.width = image_attributes['width_scaled']
         self.height = image_attributes['height_scaled']
         self.factor = image_attributes['reduction_factor']
         self.position_image_x = image_attributes['position_x']
         self.position_image_y = image_attributes['position_y']
         
-        self.img_panel_width = self.width + self.position_image_x
-        self.img_panel_height = self.height + self.position_image_y
+        self.img_panel_width = self.width + self.position_image_x + image_attributes['added_panel']
+        self.img_panel_height = self.height + self.position_image_y + image_attributes['added_panel']
+
+        print(self.width_without_scale, self.height_without_scale)
+        print(self.width)
+        print(self.height)
+        print(self.position_image_x)
+        print(self.position_image_y)
+        print(self.img_panel_width)
+        print(self.img_panel_height)
+
+
 
         # Initialize Labels
         self.video_name_headline = QLabel('Video: ', self)

@@ -155,13 +155,14 @@ def read_annotations(frame_number, labels_to_annotate, labels_to_plot, df, cropp
     return annotations_output
 
 
-def image_attributes(original_resolution):
+def image_attributes(original_resolution, file_name):
     '''
     Read the config file for the scale by height factor
     and the image positioning in x and y
     and return the width and height of the image when scaled
     the factor by which the image was reduced
     :param original_resolution: (PIX_in_x, PIX_in_y)
+    :param file_name: name of the video that we read
     :return output: {'width_scaled', 'height_scaled', 
                     'reduction_factor', 'position_x',
                     'position_y'}
@@ -169,17 +170,32 @@ def image_attributes(original_resolution):
 
     # Read scaling parameter
     out_config = user_widgets.read_config('scale_image_by_height')
+    try:
+        out_config = ast.literal_eval(out_config.split('=')[1])
+        for key in out_config.keys():
+            if key in file_name:
+                scale_image_by_height = out_config[key]
+                break
+        if key == 'default':
+            scale_image_by_height = out_config['default']
+        if key == 'Heil_1' or key == 'Heil_2':
+            added_panel = 14
+        else:
+            added_panel = 0
+    except:
+        print('Scale image by height ast failed. scale_image_by_height = 1000')
+        scale_image_by_height = 1000
 
-    if out_config:
-        try:
-            scale_image_by_height = int(out_config.split('=')[1])
-            # Check that the scale_image_by_height is in the scale
-            if not 899 < scale_image_by_height < 1001:
-                raise ValueError('scale_image_by_height value must be between 900 and 1000')
-        except:
-            raise ValueError('scale_image_by_height must contain an integer value')
-    else:
-        raise OSError('scale_image_by_height value missing in the config')
+    
+    try:
+        scale_image_by_height = int(scale_image_by_height)
+        # Check that the scale_image_by_height is in the scale
+        if not 899 < scale_image_by_height < 1051:
+            print('Scale image by height must be between 900 and 1050. Default = 1000')
+            scale_image_by_height = 1000
+    except:
+        print('scale_image_by_height must contain an integer value. Default = 1000')
+
 
     factor = scale_image_by_height/original_resolution[1]
 
@@ -187,22 +203,40 @@ def image_attributes(original_resolution):
     out_pos_x = user_widgets.read_config('position_x')
     out_pos_y = user_widgets.read_config('position_y')
 
-    if out_pos_x and out_pos_y:
-        try:
-            position_x = int(out_pos_x.split('=')[1])
-            position_y = int(out_pos_y.split('=')[1])
-            if not (0<=position_x<=100 and 0<=position_y<=50):
-                raise ValueError('Image position values out of the allowed range. Check config.')
-        except:
-            raise ValueError('Image position values need to be integers')
-    else:
-        raise OSError('position_x or position_y values are missing in the config file')
+
+    try:
+        out_pos_x = ast.literal_eval(out_pos_x.split('=')[1])
+        out_pos_y = ast.literal_eval(out_pos_y.split('=')[1])
+        for key in out_pos_x.keys():
+            if key in file_name:
+                out_pos_x = out_pos_x[key]
+                out_pos_y = out_pos_y[key]
+                break
+        if key == 'default':
+            out_pos_x = out_pos_x['default']
+            out_pos_y = out_pos_y['default']
+    except:
+        print('Position x or y ast failed. pos_x=25, pos_y=35')
+        out_pos_x = 25
+        out_pos_y = 35
+
+
+    try:
+        position_x = int(out_pos_x)
+        position_y = int(out_pos_y)
+        if not (0<=position_x<=100 and 0<=position_y<=56):
+            print('Position x or y of the image not in the range. Change config. Default values implemented')
+            position_x = 25
+            position_y = 35
+    except:
+        print('Position x or y must contain an integer value. Default values implemented')
 
     output = {'width_scaled': int(factor*original_resolution[0]),
               'height_scaled': scale_image_by_height,
               'reduction_factor': factor,
               'position_x':position_x,
-              'position_y':position_y
+              'position_y':position_y,
+              'added_panel':added_panel
               }
 
     return output

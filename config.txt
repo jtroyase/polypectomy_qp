@@ -19,12 +19,12 @@ label_colors = {'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'b
 # Colors of polyps id
 colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}
 
-# scale factor image. 900 < scale_image_by_height < 1000
-scale_image_by_height=1000
+# scale factor image. 900 < scale_image_by_height < 1050
+scale_image_by_height={'Boeck2':1000, 'Boeck1':1000, 'Heil_2':970, 'Heil_1':970, 'PassekEndoBox':1025, 'PassekRecordingPC': 1025, 'Ludwig':1000, 'KatharinenEndoBox':1020 , 'HeilEndoBox':990, 'default':1000}
 
-# position in the screen. Values must be between 0<x<100 and 0<y50.
-position_x =25
-position_y =35
+# position in the screen. Values must be between 0<x<100 and 0<y<55.
+position_x = {'Boeck2':20, 'Boeck1':20, 'Heil_1':3, 'Heil_2':3, 'PassekEndoBox':20, 'PassekRecordingPC':20 , 'Ludwig':8, 'KatharinenEndoBox':6 , 'HeilEndoBox':8, 'default':25}
+position_y = {'Boeck2':38, 'Boeck1':35, 'Heil_1':53, 'Heil_2':53, 'PassekEndoBox':25, 'PassekRecordingPC':25 , 'Ludwig':38, 'KatharinenEndoBox':35 , 'HeilEndoBox':47, 'default':35}
 
 # spacing of the objects in the x axis of the screen
-spacing =2
+spacing =5
