@@ -86,9 +86,9 @@ class SetupWindow(QWidget):
         """
         shows a dialog to choose folder with images to label
         """
-        dialog = QFileDialog(self)
-        dialog.setWindowModality(Qt.WindowModal)
-        folder_path = dialog.getExistingDirectory(None, "Select Folder", "/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/")
+        self.dialog = QFileDialog(self)
+        self.dialog.setWindowModality(Qt.WindowModal)
+        folder_path = self.dialog.getExistingDirectory(None, "Select Folder", "/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/")
 
         self.selected_folder_label.setText(folder_path)
         self.selected_folder = folder_path
@@ -126,7 +126,7 @@ class SetupWindow(QWidget):
         form_is_valid, message = self.check_validity()
 
         if form_is_valid:
-            self.close()
+            self.hide()
 
             # Retrieve that the user selected to annotate
             labels_to_annotate = []
@@ -139,7 +139,7 @@ class SetupWindow(QWidget):
             # Get the database
             df, metadata = get_database(self.selected_folder, labels_to_annotate)
             img_paths = get_img_paths(self.selected_folder, df)
-            annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, labels_to_plot, metadata, img_paths)
-            annotation_window.show()
+            self.annotation_window = LabelerWindow(df, self.selected_folder, labels_to_annotate, labels_to_plot, metadata, img_paths)
+            self.annotation_window.show()
         else:
             self.error_message.setText(message)

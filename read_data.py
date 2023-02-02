@@ -178,7 +178,7 @@ def image_attributes(original_resolution, file_name):
                 break
         if key == 'default':
             scale_image_by_height = out_config['default']
-        if key == 'Heil_1' or key == 'Heil_2':
+        if key == 'Heil_1' or key == 'Heil_2' or key == 'PassekEndoBox':
             added_panel = 14
         else:
             added_panel = 0

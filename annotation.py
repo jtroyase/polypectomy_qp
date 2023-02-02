@@ -6,7 +6,7 @@ import time
 
 from PyQt5.QtCore import Qt, QPoint, QRect
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QFont, QBrush
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QScrollArea, \
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QScrollArea, \
      QGroupBox, QFormLayout, QTableWidget, QStyle, QStyleOptionTitleBar
 
 import pyqtgraph as pg
@@ -26,7 +26,7 @@ def make_folder(directory):
         os.makedirs(directory)
 
 
-class LabelerWindow(QWidget):
+class LabelerWindow(QMainWindow):
     def __init__(self, df, input_folder, labels_to_annotate, labels_to_plot, metadata, img_paths):
         super().__init__()
 
@@ -72,16 +72,6 @@ class LabelerWindow(QWidget):
         
         self.img_panel_width = self.width + self.position_image_x + image_attributes['added_panel']
         self.img_panel_height = self.height + self.position_image_y + image_attributes['added_panel']
-
-        print(self.width_without_scale, self.height_without_scale)
-        print(self.width)
-        print(self.height)
-        print(self.position_image_x)
-        print(self.position_image_y)
-        print(self.img_panel_width)
-        print(self.img_panel_height)
-
-
 
         # Initialize Labels
         self.video_name_headline = QLabel('Video: ', self)
