@@ -88,7 +88,9 @@ class SetupWindow(QWidget):
         """
         self.dialog = QFileDialog(self)
         self.dialog.setWindowModality(Qt.WindowModal)
-        folder_path = self.dialog.getExistingDirectory(None, "Select Folder", "/media/inexen/CADe_comparison_review/PolypectomyQualityPredictor/")
+        def_path = user_widgets.read_config('def_path').split('=')[1]
+        def_path = ast.literal_eval(" ".join(def_path.split()))
+        folder_path = self.dialog.getExistingDirectory(None, "Select Folder", def_path)
 
         self.selected_folder_label.setText(folder_path)
         self.selected_folder = folder_path

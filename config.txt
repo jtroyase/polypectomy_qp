@@ -3,28 +3,31 @@
 # labels_to_annotate contain default labels that you want to annotate but not display in the plot
 # labels_to_plot contain the predictions of the AI that you want to display in the plot
 # extra_labels contain labels that might be additionally chosen to be annotated
-labels_to_annotate = ["polyp", "start_withdrawal", "wound", "ileum"]
-labels_to_plot = ["polyp", "snare", "grasper", "ileum", "appendix", "ileocaecalvalve"]
-extra_labels = ["needle", "grasper", "clip", "snare", "outside"]
+labels_to_annotate=["polyp", "start_withdrawal", "wound", "ileum"]
+labels_to_plot=["polyp", "snare", "grasper", "ileum", "appendix", "ileocaecalvalve"]
+extra_labels=["needle", "grasper", "clip", "snare", "outside"]
 
 # Instruments to resect
-instruments = ["cold snare", "hot snare", "grasper", "end resection"]
+instruments=["cold snare", "hot snare", "grasper", "end resection"]
 
 # Colors for the labels
-label_colors = {'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'blue', 'clip':'cyan', 'wound':'gray', 'outside':'gray', 'ileum':'black', 'cold snare':'blue', 'hot snare':'red', 'end resection':'black', 'start_withdrawal':'blue', "appendix":"black", "ileocaecalvalve":"black"}
+label_colors={'polyp':'green', 'needle':'red', 'grasper':'magenta', 'snare':'blue', 'clip':'cyan', 'wound':'gray', 'outside':'gray', 'ileum':'black', 'cold snare':'blue', 'hot snare':'red', 'end resection':'black', 'start_withdrawal':'blue', "appendix":"black", "ileocaecalvalve":"black"}
 
 # Maximum number of polyps possible to annotate (currently not configurable)
 # max_polyp=8
 
 # Colors of polyps id
-colors_id = {1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}
+colors_id={1:'green', 2:'red', 3:'blue', 4:'magenta', 5:'cyan', 6:'yellow', 7:'gray', 8:'black'}
 
 # scale factor image. 900 < scale_image_by_height < 1050
 scale_image_by_height={'Boeck2':1000, 'Boeck1':1000, 'Heil_2':970, 'Heil_1':970, 'PassekEndoBox':1025, 'PassekRecordingPC': 1025, 'Ludwig':1000, 'KatharinenEndoBox':1020 , 'HeilEndoBox':980, 'default':1000}
 
 # position in the screen. Values must be between 0<x<100 and 0<y<55.
-position_x = {'Boeck2':20, 'Boeck1':20, 'Heil_1':3, 'Heil_2':3, 'PassekEndoBox':5, 'PassekRecordingPC':20 , 'Ludwig':8, 'KatharinenEndoBox':6 , 'HeilEndoBox':2, 'default':25}
-position_y = {'Boeck2':38, 'Boeck1':35, 'Heil_1':53, 'Heil_2':53, 'PassekEndoBox':18, 'PassekRecordingPC':25 , 'Ludwig':38, 'KatharinenEndoBox':35 , 'HeilEndoBox':51, 'default':35}
+position_x={'Boeck2':20, 'Boeck1':20, 'Heil_1':3, 'Heil_2':3, 'PassekEndoBox':5, 'PassekRecordingPC':20 , 'Ludwig':8, 'KatharinenEndoBox':6 , 'HeilEndoBox':2, 'default':25}
+position_y={'Boeck2':38, 'Boeck1':35, 'Heil_1':53, 'Heil_2':53, 'PassekEndoBox':18, 'PassekRecordingPC':25 , 'Ludwig':38, 'KatharinenEndoBox':35 , 'HeilEndoBox':51, 'default':35}
 
 # spacing of the objects in the x axis of the screen
-spacing =5
+spacing=5
+
+# default path to open dialog window to choose video
+def_path="/home/inexen/Desktop/pqp_data"

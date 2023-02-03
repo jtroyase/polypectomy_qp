@@ -205,8 +205,8 @@ def image_attributes(original_resolution, file_name):
 
 
     try:
-        out_pos_x = ast.literal_eval(out_pos_x.split('=')[1])
-        out_pos_y = ast.literal_eval(out_pos_y.split('=')[1])
+        out_pos_x = ast.literal_eval(" ".join(out_pos_x.split('=')[1].split()))
+        out_pos_y = ast.literal_eval(" ".join(out_pos_y.split('=')[1].split()))
         for key in out_pos_x.keys():
             if key in file_name:
                 out_pos_x = out_pos_x[key]
