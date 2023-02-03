@@ -180,6 +180,9 @@ def image_attributes(original_resolution, file_name):
             scale_image_by_height = out_config['default']
         if key == 'Heil_1' or key == 'Heil_2' or key == 'PassekEndoBox':
             added_panel = 14
+        elif key == 'simonis':
+            added_panel = 100
+            print('here')
         else:
             added_panel = 0
     except:
